@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>By Omer Asaf Proje(Math</title>
+<title>Math proje man (By OmerAsaf)BaliCekerkenOynamayın</title>
 <style>
 body{
     margin:0;
@@ -196,7 +196,7 @@ for(let i=1;i<=90;i++){
 }
 
 /* ================= GAME VARIABLES ================= */
-let bird = {x:150,y:400,vy:0,frame:0};
+let bird = {x:150,y:350,vy:0,frame:0}; // biraz yukardan başlasın
 let pipes = [];
 let state = "menu"; // menu, question, play, gameover
 let score = 0;
@@ -206,14 +206,14 @@ let currentQuestion = null;
 let menuCounter = 0;
 function animateMenu(){
     menuCounter += 0.05;
-    bird.y = 400 + Math.sin(menuCounter)*20;
+    bird.y = 350 + Math.sin(menuCounter)*20;
     bird.frame += 0.2;
 }
 
 /* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
-    bird.y=400;
+    bird.y=350;
     bird.vy=0;
     bird.frame=0;
     score=0;
@@ -227,7 +227,7 @@ function spawnPipe(){
 /* ================= ASK QUESTION ================= */
 function askQuestion(){
     let q = questions.find(q=>!q.asked);
-    if(!q) { startGame(); return; }
+    if(!q) { menuBox.style.display="flex"; state="menu"; return; }
     currentQuestion = q;
     q.asked=true;
 
@@ -273,7 +273,7 @@ function startGame(){
 /* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="play"){
-        bird.vy=-7;
+        bird.vy=-6; // biraz daha yumuşak zıplama
     }
 });
 
@@ -305,7 +305,7 @@ function update(){
         if(bird.x+50>p.x && bird.x<p.x+80 &&
            (bird.y< p.top || bird.y+50>p.top+180)){
                state="gameover";
-               setTimeout(askQuestion,500);
+               setTimeout(()=>askQuestion(),1000);
            }
         if(!p.passed && p.x+80<bird.x){ 
             score++;
@@ -315,7 +315,7 @@ function update(){
 
     if(bird.y>canvas.height-100 || bird.y<0){
         state="gameover";
-        setTimeout(askQuestion,500);
+        setTimeout(()=>askQuestion(),1000);
     }
 
     if(pipes.length===0 || pipes[pipes.length-1].x<canvas.width-300){
