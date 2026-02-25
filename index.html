@@ -212,7 +212,7 @@ function animateMenu(){
 /* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
-    bird.y=canvas.height/2-50; // biraz yukarıda başlasın
+    bird.y=canvas.height/2-50; 
     bird.vy=0;
     bird.frame=0;
     score=0;
@@ -275,7 +275,7 @@ function startGame(){
 /* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="play"){
-        bird.vy=-9; // zıplama %10 azaltıldı
+        bird.vy=-9; 
     }
 });
 
@@ -302,15 +302,19 @@ function update(){
     }
     if(state!=="play") return;
 
-    bird.vy += 0.54; // düşme %10 azaltıldı
+    bird.vy += 0.54; 
     bird.y += bird.vy;
     bird.frame += 0.2;
 
     pipes.forEach(p=>{
-        p.x -=5.4; // hız %10 azaltıldı
-        // Hitbox
-        if(bird.x+50>p.x && bird.x<p.x+80 &&
-           (bird.y< p.top || bird.y+50>p.top+200)){ // alt pipe büyütüldü
+        p.x -=5.4; 
+
+        // Hitbox'u %15 küçült
+        const hitMarginX = 0.85*80;
+        const hitMarginY = 0.85*200;
+
+        if(bird.x+50>p.x && bird.x<p.x+hitMarginX &&
+           (bird.y< p.top || bird.y+50>p.top+hitMarginY)){
                state="gameover";
                setTimeout(()=>askQuestion(),1000);
            }
@@ -346,8 +350,10 @@ function draw(){
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
     pipes.forEach(p=>{
+        // Üst pipe
         ctx.drawImage(pipeImg,p.x,p.top-320,80,320);
-        ctx.drawImage(pipeImg,p.x,p.top+200,80,320); // alt pipe gap
+        // Alt pipe
+        ctx.drawImage(pipeImg,p.x,p.top+200,80,320);
     });
 
     ctx.drawImage(baseImg,0,canvas.height-100,canvas.width,100);
