@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Bird Math Edition(Sansi Asaf </title>
+<title>Flappy Bird Math Edition</title>
 <style>
 body{
     margin:0;
@@ -74,8 +74,8 @@ canvas{
 }
 
 #messageImg{
-    width:300px;
-    height:150px;
+    width:400px;
+    height:200px;
 }
 </style>
 </head>
@@ -160,7 +160,7 @@ for(let i=1;i<=90;i++){
 /* ================= GAME VARIABLES ================= */
 let bird = {x:150,y:400,vy:0,frame:0};
 let pipes = [];
-let state = "menu"; // menu, play, gameover
+let state = "intro"; // intro, question, play, gameover
 let score = 0;
 let currentQuestion = null;
 
@@ -171,18 +171,6 @@ function animateMenu(){
     bird.y = 400 + Math.sin(menuCounter)*30;
     bird.frame += 0.2;
 }
-
-/* ================= INPUT ================= */
-canvas.addEventListener("click",()=>{
-    if(state==="menu"){
-        menuBox.style.display="none";
-        askQuestion(); // Oyun başlamadan önce soru sor
-        return;
-    }
-    if(state==="play"){
-        bird.vy=-6;
-    }
-});
 
 /* ================= GAME FUNCTIONS ================= */
 function resetGame(){
@@ -201,7 +189,7 @@ function spawnPipe(){
 /* ================= ASK QUESTION ================= */
 function askQuestion(){
     let q = questions.find(q=>!q.asked);
-    if(!q) return startGame(); // Sorular biterse direkt başla
+    if(!q) { startGame(); return; }
     currentQuestion = q;
     q.asked=true;
 
@@ -219,6 +207,7 @@ function askQuestion(){
     });
 
     questionBox.style.display="flex";
+    state="question";
 }
 
 /* ================= CHECK ANSWER ================= */
@@ -231,7 +220,8 @@ function checkAnswer(el){
         setTimeout(()=>{
             questionBox.style.display="none";
             menuBox.style.display="flex";
-            state="menu";
+            state="intro";
+            setTimeout(() => startIntro(), 3000);
         },2000);
     }
 }
@@ -242,9 +232,18 @@ function startGame(){
     state="play";
 }
 
+/* ================= INTRO FLOW ================= */
+function startIntro(){
+    menuBox.style.display="flex";
+    setTimeout(()=>{
+        menuBox.style.display="none";
+        askQuestion();
+    },3000);
+}
+
 /* ================= GAME UPDATE ================= */
 function update(){
-    if(state==="menu"){
+    if(state==="intro"){
         animateMenu();
         return;
     }
@@ -256,8 +255,8 @@ function update(){
 
     pipes.forEach(p=>{
         p.x -=4;
-        if(bird.x+40>p.x && bird.x<p.x+80 &&
-           (bird.y< p.top || bird.y+40>p.top+180)){
+        if(bird.x+50>p.x && bird.x<p.x+80 &&
+           (bird.y< p.top || bird.y+50>p.top+180)){
                state="gameover";
                setTimeout(askQuestion,500);
            }
@@ -298,10 +297,9 @@ function draw(){
     });
 
     ctx.drawImage(baseImg,0,canvas.height-100,canvas.width,100);
+    ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,50,50);
 
-    ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,50,40);
-
-    if(state!=="menu"){
+    if(state==="play"){
         drawScore();
     }
 
@@ -316,6 +314,8 @@ function loop(){
     draw();
     requestAnimationFrame(loop);
 }
+
+startIntro();
 loop();
 </script>
 </body>
