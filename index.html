@@ -1,150 +1,73 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>The News Project</title>
+<title>Flappy Bird Math Edition</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
 body{
+    margin:0;
     background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
     color:white;
+    font-family:Arial;
+}
+
+canvas{
+    border-radius:15px;
+    box-shadow:0 0 25px rgba(255,255,255,0.15);
+}
+
+#questionBox{
+    position:fixed;
+    inset:0;
+    background:black;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    gap:20px;
     text-align:center;
 }
 
-/* SCREENS */
-.screen{display:none;padding:20px}
-.screen.active{display:block;animation:fade 0.4s ease}
-@keyframes fade{
-    from{opacity:0;transform:translateY(10px)}
-    to{opacity:1;transform:none}
+input{
+    padding:10px;
+    width:140px;
+    text-align:center;
+    font-size:1.1em;
 }
-
 button{
     padding:10px 25px;
-    margin:10px;
     border:none;
     border-radius:8px;
     cursor:pointer;
-}
-
-/* NEWS */
-.news{
-    max-width:850px;
-    margin:auto;
-    text-align:left;
-    line-height:1.7;
-}
-
-.slide{
-    display:none;
-}
-.slide.active{
-    display:block;
-    animation:fade 0.4s ease;
-}
-
-.slide img{
-    width:100%;
-    border-radius:12px;
-    margin:15px 0;
-}
-
-/* GAME */
-canvas{
-    background:black;
-    border-radius:15px;
-    margin-top:10px;
 }
 </style>
 </head>
 <body>
 
-<!-- MENU -->
-<div id="menu" class="screen active">
-    <h1>Project Selection</h1>
-    <button onclick="showNews()">English News Project</button>
-    <button onclick="showGame()">Math Game Project</button>
-</div>
+<canvas id="canvas" width="400" height="600"></canvas>
 
-<!-- NEWS -->
-<div id="news" class="screen">
-    <h1>The News</h1>
-
-    <div id="slides" class="news"></div>
-
-    <button onclick="prevSlide()">◀</button>
-    <button onclick="nextSlide()">▶</button>
-    <button onclick="goMenu()">Menu</button>
-</div>
-
-<!-- GAME -->
-<div id="game" class="screen">
-    <canvas id="canvas" width="400" height="600"></canvas>
-    <br>
-    <button onclick="goMenu()">Menu</button>
+<div id="questionBox">
+    <h2 id="questionText"></h2>
+    <input id="answerInput" placeholder="Cevap">
+    <button onclick="checkAnswer()">Kontrol</button>
+    <p id="solution"></p>
 </div>
 
 <script>
-
-/* SCREEN SYSTEM */
-function goMenu(){
-    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-    document.getElementById("menu").classList.add("active");
-}
-function showNews(){
-    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-    document.getElementById("news").classList.add("active");
-}
-function showGame(){
-    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-    document.getElementById("game").classList.add("active");
-}
-
-/* ================= NEWS AUTO ASSETS ================= */
-
-const slidesDiv = document.getElementById("slides");
-
-for(let i=1;i<=30;i++){
-    const slide = document.createElement("div");
-    slide.className = "slide";
-    if(i===1) slide.classList.add("active");
-
-    slide.innerHTML = `
-        <img src="assets/${i}.jpg">
-        <h2>News Title ${i}</h2>
-        <p>
-        This is sample school news content. 
-        Students can read and understand easily.
-        Educational project design.
-        </p>
-    `;
-    slidesDiv.appendChild(slide);
-}
-
-let currentSlide = 0;
-const slides = document.querySelectorAll(".slide");
-
-function nextSlide(){
-    slides[currentSlide].classList.remove("active");
-    currentSlide = (currentSlide + 1) % slides.length;
-    slides[currentSlide].classList.add("active");
-}
-function prevSlide(){
-    slides[currentSlide].classList.remove("active");
-    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-    slides[currentSlide].classList.add("active");
-}
-
-/* ================= FLAPPY BIRD ================= */
-
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+/* ================= IMAGE LOADER ================= */
+
 function load(name){
-    const i = new Image();
-    i.src = "sprites/" + name;
-    return i;
+    const img = new Image();
+    img.src = "sprites/" + name;
+    return img;
 }
 
 const bg = load("background-day.png");
@@ -157,19 +80,57 @@ const birdFrames = [
     load("bluebird-downflap.png")
 ];
 
+const messageImg = load("message.png");
+const gameoverImg = load("gameover.png");
+
+/* ================= QUESTIONS (90) ================= */
+
+const questions = [];
+
+for(let i=1;i<=90;i++){
+
+    let a = Math.floor(Math.random()*8)+2;
+    let b = Math.floor(Math.random()*9)+1;
+
+    questions.push({
+        q: `${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
+        ans: (b).toString(),
+        sol: `İşçi sayısı artarsa süre azalır (ters orantı). Süre yarıya düşer. Cevap: ${b}`
+    });
+}
+
+let currentQuestion = null;
+
+/* ================= GAME VARIABLES ================= */
+
 let bird = {x:80,y:200,vy:0,frame:0};
 let pipes = [];
 let state = "menu";
+let score = 0;
+
+/* ================= INPUT ================= */
 
 canvas.addEventListener("click",()=>{
-    if(state==="menu"){ reset(); state="play"; bird.vy=-7; return; }
-    if(state==="play"){ bird.vy=-7; }
+
+    if(state==="menu"){
+        resetGame();
+        state="play";
+        bird.vy=-7;
+        return;
+    }
+
+    if(state==="play"){
+        bird.vy=-7;
+    }
 });
 
-function reset(){
+/* ================= LOGIC ================= */
+
+function resetGame(){
     pipes=[];
     bird.y=200;
     bird.vy=0;
+    score=0;
 }
 
 function spawnPipe(){
@@ -179,7 +140,36 @@ function spawnPipe(){
 
 setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
 
+function askQuestion(){
+    currentQuestion = questions[Math.floor(Math.random()*questions.length)];
+
+    document.getElementById("questionText").innerText = currentQuestion.q;
+    document.getElementById("solution").innerText = "";
+    document.getElementById("answerInput").value = "";
+
+    document.getElementById("questionBox").style.display = "flex";
+}
+
+function checkAnswer(){
+    const val = document.getElementById("answerInput").value;
+
+    if(val == currentQuestion.ans){
+        document.getElementById("questionBox").style.display = "none";
+        resetGame();
+        state="play";
+    }else{
+        document.getElementById("solution").innerText = "Yanlış! " + currentQuestion.sol;
+
+        setTimeout(()=>{
+            document.getElementById("questionBox").style.display = "none";
+            resetGame();
+            state="menu";
+        },2000);
+    }
+}
+
 function update(){
+
     if(state!=="play") return;
 
     bird.vy += 0.4;
@@ -194,14 +184,26 @@ function update(){
             bird.x<p.x+60 &&
             (bird.y<p.top || bird.y+30>p.top+140)
         ){
-            state="menu";
-            reset();
+            state="gameover";
+
+            setTimeout(()=>{
+                askQuestion();
+            },500);
         }
     });
+
+    if(bird.y>520 || bird.y<0){
+        state="gameover";
+        setTimeout(()=>{ askQuestion(); },500);
+    }
 }
 
+/* ================= DRAW ================= */
+
 function draw(){
+
     ctx.clearRect(0,0,400,600);
+
     ctx.drawImage(bg,0,0,400,600);
 
     pipes.forEach(p=>{
@@ -217,15 +219,25 @@ function draw(){
     }
 
     ctx.drawImage(baseImg,0,550,400,50);
+
+    if(state==="menu"){
+        ctx.drawImage(messageImg,90,180,220,120);
+    }
+
+    if(state==="gameover"){
+        ctx.drawImage(gameoverImg,80,180,240,120);
+    }
 }
+
+/* ================= LOOP ================= */
 
 function loop(){
     update();
     draw();
     requestAnimationFrame(loop);
 }
-loop();
 
+loop();
 </script>
 </body>
 </html>
