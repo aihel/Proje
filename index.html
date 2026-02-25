@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Math(Meth) Project Man(BySansiAsaf)</title>
+<title>Flappy Bird Math Edition</title>
 <style>
 body{
     margin:0;
@@ -117,6 +117,7 @@ let bird = {x:100,y:300,vy:0,frame:0};
 let pipes = [];
 let state="menu";
 let score=0;
+let awaitingQuestion=false;
 
 /* ================= AUDIO ================= */
 const bgm = new Audio("88.m4a");
@@ -146,17 +147,21 @@ function resetGame(){
 
 // Spawn pipe
 function spawnPipe(){
+    if(state!=="play") return;
     let top = Math.random()*250+50;
     pipes.push({x:canvas.width, top:top, passed:false});
 }
 
-setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
+setInterval(spawnPipe,2000);
 
 // Ask question
 function askQuestion(){
+    if(awaitingQuestion) return; // Tek seferlik
+    awaitingQuestion=true;
     let available = questions.filter((q,i)=>!askedQuestions.has(i));
     if(available.length===0){
         state="menu";
+        awaitingQuestion=false;
         return;
     }
     let index = Math.floor(Math.random()*available.length);
@@ -176,6 +181,7 @@ function checkAnswer(){
         document.getElementById("questionBox").style.display="none";
         resetGame();
         state="menu";
+        awaitingQuestion=false;
     }else{
         document.getElementById("solution").innerText = "Yanlış! " + currentQuestion.sol;
     }
@@ -197,8 +203,8 @@ function update(){
         const hitHTop=pipeImg.height*0.8;
         const hitHBottom=pipeImg.height*0.8;
 
-        const hitTop = bird.x+40>p.x && bird.x<p.x+hitW && bird.y<p.top;
-        const hitBottom = bird.x+40>p.x && bird.x<p.x+hitW && bird.y+30>p.top+140;
+        const hitTop = bird.x+50>p.x && bird.x<p.x+hitW && bird.y<p.top;
+        const hitBottom = bird.x+50>p.x && bird.x<p.x+hitW && bird.y+40>p.top+140;
 
         if(hitTop||hitBottom){
             console.log("Hit!",p.x,bird.y);
@@ -211,7 +217,6 @@ function update(){
             p.passed=true;
         }
 
-        // Ekrandan çıkan pipe'i sil
         if(p.x + 60 < 0){
             pipes.splice(i,1);
         }
