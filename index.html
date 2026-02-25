@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Bird Math Edition</title>
+<title>Flappy Bird Math Edition(by Omer Asaf Fikir icin sagol bıyıklı) </title>
 <style>
 body{
     margin:0;
@@ -17,6 +17,10 @@ body{
 canvas{
     border-radius:15px;
     box-shadow:0 0 25px rgba(255,255,255,0.15);
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:0;
 }
 
 #questionBox{
@@ -30,6 +34,7 @@ canvas{
     gap:30px;
     text-align:center;
     padding:50px 20px;
+    z-index:2;
 }
 
 #questionText{
@@ -64,13 +69,14 @@ canvas{
 }
 
 #menuBox{
-    position:fixed;
+    position:absolute;
     inset:0;
     display:flex;
     justify-content:center;
     align-items:center;
     flex-direction:column;
-    background:black;
+    pointer-events:none; /* tıklamaları engelle */
+    z-index:1;
 }
 
 #messageImg{
@@ -221,7 +227,7 @@ function checkAnswer(el){
             questionBox.style.display="none";
             menuBox.style.display="flex";
             state="intro";
-            setTimeout(() => startIntro(), 3000);
+            setTimeout(startIntro, 3000);
         },2000);
     }
 }
@@ -305,6 +311,11 @@ function draw(){
 
     if(state==="gameover"){
         ctx.drawImage(gameoverImg,canvas.width/2-150,200,300,100);
+    }
+
+    if(state==="intro"){
+        // overlay message.png + "By Omer Asaf"
+        ctx.drawImage(messageImg,canvas.width/2-200,canvas.height/2-100,400,200);
     }
 }
 
