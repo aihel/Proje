@@ -2,29 +2,22 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flappy Bird Math Edition</title>
 <style>
 body{
     margin:0;
-    overflow:hidden;
-    font-family:Arial;
     background:black;
-}
-canvas{
-    display:block;
-}
-
-#intro{
-    position:fixed;
-    inset:0;
     display:flex;
     justify-content:center;
     align-items:center;
-    font-size:5em;
-    color:yellow;
-    font-weight:bold;
-    background:black;
+    height:100vh;
+    font-family:Arial;
+    overflow:hidden;
+}
+
+canvas{
+    border-radius:15px;
+    box-shadow:0 0 25px rgba(255,255,255,0.15);
 }
 
 #questionBox{
@@ -33,315 +26,287 @@ canvas{
     background:rgba(0,0,0,0.95);
     display:none;
     justify-content:center;
-    align-items:flex-start;
+    align-items:center;
     flex-direction:column;
-    gap:15px;
+    gap:30px;
     text-align:center;
-    padding-top:50px;
+    padding:50px 20px;
 }
 
 #questionText{
     color:white;
-    font-size:1.5em;
-    margin-bottom:20px;
-    max-width:80%;
+    font-size:2em;
+    max-width:90%;
 }
 
 .answers{
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:20px;
+    align-items:center;
 }
 
 .answers button{
-    padding:12px 25px;
-    font-size:1.1em;
+    padding:20px 50px;
+    font-size:1.5em;
     border:none;
-    border-radius:8px;
+    border-radius:10px;
     cursor:pointer;
     background:#444;
     color:white;
+    width:50%;
+    max-width:400px;
 }
 
 #solution{
     color:yellow;
-    margin-top:15px;
-    font-size:1.1em;
+    font-size:1.5em;
+    margin-top:20px;
 }
 
-#userMessage{
-    margin-top:20px;
-    padding:8px;
-    width:200px;
+#messageText{
+    color:white;
+    font-size:2em;
+    text-align:center;
 }
 </style>
 </head>
 <body>
 
-<canvas id="canvas"></canvas>
+<audio id="bgMusic" src="88.m4a" loop autoplay></audio>
 
-<div id="intro">ByOmerAsaf</div>
+<canvas id="canvas" width="600" height="800"></canvas>
 
 <div id="questionBox">
     <h2 id="questionText"></h2>
     <div class="answers">
-        <button id="btn1" onclick="checkAnswer(this)">A</button>
-        <button id="btn2" onclick="checkAnswer(this)">B</button>
-        <button id="btn3" onclick="checkAnswer(this)">C</button>
-        <button id="btn4" onclick="checkAnswer(this)">D</button>
+        <button onclick="checkAnswer(this)">A</button>
+        <button onclick="checkAnswer(this)">B</button>
+        <button onclick="checkAnswer(this)">C</button>
+        <button onclick="checkAnswer(this)">D</button>
     </div>
-    <input id="userMessage" placeholder="Mesajınızı yazın...">
     <p id="solution"></p>
 </div>
 
-<audio id="bgMusic" loop autoplay>
-    <source src="88.m4a" type="audio/m4a">
-</audio>
+<div id="menuBox">
+    <h1 id="messageText">By Omer Asaf</h1>
+</div>
 
 <script>
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-
-function resizeCanvas(){
-    canvas.width=window.innerWidth;
-    canvas.height=window.innerHeight;
-}
-window.addEventListener("resize",resizeCanvas);
-resizeCanvas();
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const questionBox = document.getElementById("questionBox");
+const questionText = document.getElementById("questionText");
+const solutionText = document.getElementById("solution");
+const answersDiv = document.querySelector(".answers");
+const menuBox = document.getElementById("menuBox");
+const messageText = document.getElementById("messageText");
+const bgMusic = document.getElementById("bgMusic");
 
 /* ================= IMAGE LOADER ================= */
-function load(name){ let img=new Image(); img.src="sprites/"+name; return img; }
+function load(name){
+    const img = new Image();
+    img.src = "sprites/" + name;
+    return img;
+}
 
-const bg=load("background-day.png");
-const baseImg=load("base.png");
-const pipeImg=load("pipe-green.png");
-const messageImg=load("message.png");
-const gameoverImg=load("gameover.png");
+const bg = load("background-day.png");
+const baseImg = load("base.png");
+const pipeImg = load("pipe-green.png");
+const gameoverImg = load("gameover.png");
+const messageImg = load("message.png");
 
-const birdFrames=[
+const birdFrames = [
     load("yellowbird-upflap.png"),
     load("yellowbird-midflap.png"),
     load("yellowbird-downflap.png")
 ];
 
-/* ================= SCORE PNG ================= */
-const scoreDigits={
-    "0": load("00000.png"),
-    "1": load("111.png"),
-    "2": load("99999.png"),
-    "3": load("33.png"),
-    "4": load("44.png"),
-    "5": load("55.png"),
-    "6": load("66.png"),
-    "7": load("77.png"),
-    "8": load("88.png"),
-    "9": load("99.png")
+/* ================= SCORE SPRITES ================= */
+const scoreSprites = {
+    0: load("00000.png"),
+    1: load("111.png"),
+    2: load("99999.png"),
+    3: load("33.png"),
+    4: load("44.png"),
+    5: load("55.png"),
+    6: load("66.png"),
+    7: load("77.png"),
+    8: load("88.png"),
+    9: load("99.png")
 };
 
-/* ================= QUESTIONS ================= */
-const questions=[
-    {
-        q:"Ali, 6 işçiyle bir işi 12 günde tamamlıyor. Eğer işçi sayısı 3 katına çıkarılırsa işi kaç günde bitirir? Bu hesaplamada işçiler eşit şekilde çalışıyor.",
-        options:["4","6","12","8"],
-        ans:"4",
-        sol:"İşçi sayısı 3 katına çıkarsa süre 3 kat azalır. 12/3=4"
-    },
-    {
-        q:"Bir araba 240 km yolu 4 saatte gidiyor. Aynı hızla 360 km yolu kaç saatte gider?",
-        options:["4","5","6","7"],
-        ans:"6",
-        sol:"360/240*4=6 saat"
-    },
-    {
-        q:"Bir işçi bir fabrikada 8 saatte 160 ürün üretiyor. 4 işçi aynı hızda çalışırsa 8 saatte kaç ürün üretir?",
-        options:["320","480","160","400"],
-        ans:"640",
-        sol:"4 işçi 8 saatte 4*160=640 ürün üretir"
-    },
-    {
-        q:"5 kişi bir işi 20 günde bitiriyor. Eğer kişi sayısı 10 olursa aynı iş kaç günde biter?",
-        options:["10","15","20","25"],
-        ans:"10",
-        sol:"Kişi sayısı 2 katına çıkarsa süre yarıya iner. 20/2=10"
-    },
-    {
-        q:"Bir depoda 12 işçi 18 günde çalışıyor. 6 işçi çalışırsa aynı işi kaç günde bitirir?",
-        options:["18","24","36","12"],
-        ans:"36",
-        sol:"İşçi sayısı yarıya düşerse süre 2 katına çıkar. 18*2=36"
-    },
-    {
-        q:"Bir fabrikada 9 işçi 27 günde bir ürün üretiyor. İşçi sayısı 3 katına çıkarsa ürün kaç günde üretilir?",
-        options:["9","27","12","15"],
-        ans:"9",
-        sol:"27/3=9"
-    }
-];
-
-let usedQuestions=[];
-let currentQuestion=null;
+/* ================= QUESTIONS (90) ================= */
+const questions = [];
+for(let i=1;i<=90;i++){
+    let a = Math.floor(Math.random()*8)+2;
+    let b = Math.floor(Math.random()*9)+1;
+    let answer = b.toString();
+    questions.push({
+        q: `${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
+        ans: answer,
+        sol: `İşçi sayısı arttığında süre ters orantılı olarak azalır. Cevap: ${answer}`,
+        asked:false
+    });
+}
 
 /* ================= GAME VARIABLES ================= */
-let bird={x:0.2*canvas.width,y:0.4*canvas.height,vy:0,frame:0};
-let pipes=[];
-let state="intro";
-let score=0;
+let bird = {x:150,y:400,vy:0,frame:0};
+let pipes = [];
+let state = "menu"; // menu, play, gameover
+let score = 0;
+let currentQuestion = null;
 
-/* ================= INTRO ================= */
-const introDiv=document.getElementById("intro");
-let introTime=0;
-function introLoop(){
-    introTime++;
-    introDiv.style.opacity=Math.min(introTime/60,1);
-    if(introTime<180){
-        requestAnimationFrame(introLoop);
-    }else{
-        state="menu";
-        introDiv.style.display="none";
-    }
+/* ================= MENU ANIMATION ================= */
+let menuCounter = 0;
+function animateMenu(){
+    menuCounter += 0.05;
+    bird.y = 400 + Math.sin(menuCounter)*30;
+    bird.frame += 0.2;
 }
-introLoop();
 
 /* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="menu"){
+        menuBox.style.display="none";
         resetGame();
         state="play";
-        bird.vy=-7;
+        bird.vy=-10;
         return;
     }
     if(state==="play"){
-        bird.vy=-7;
+        bird.vy=-10;
     }
 });
 
 /* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
-    bird.y=0.4*canvas.height;
+    bird.y=400;
     bird.vy=0;
+    bird.frame=0;
     score=0;
 }
 
 function spawnPipe(){
-    let top=Math.random()*(canvas.height*0.5)+50;
-    pipes.push({x:canvas.width,top,scored:false});
+    let top = Math.random()*300 + 100;
+    pipes.push({x:canvas.width,top:top});
 }
-setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
 
-/* ================= QUESTIONS ================= */
+/* ================= ASK QUESTION ================= */
 function askQuestion(){
-    if(usedQuestions.length>=questions.length) return;
-    do{
-        currentQuestion=questions[Math.floor(Math.random()*questions.length)];
-    }while(usedQuestions.includes(currentQuestion));
-    usedQuestions.push(currentQuestion);
+    let q = questions.find(q=>!q.asked);
+    if(!q) return; // tüm sorular soruldu
+    currentQuestion = q;
+    q.asked=true;
 
-    document.getElementById("questionText").innerText=currentQuestion.q;
-    const btns=document.querySelectorAll(".answers button");
-    currentQuestion.options.forEach((opt,i)=>{
-        btns[i].innerText=opt;
+    questionText.innerText = currentQuestion.q;
+    solutionText.innerText = "";
+
+    const options = [currentQuestion.ans,
+        (parseInt(currentQuestion.ans)+1).toString(),
+        (parseInt(currentQuestion.ans)+2).toString(),
+        (parseInt(currentQuestion.ans)+3).toString()
+    ].sort(()=>Math.random()-0.5);
+
+    answersDiv.querySelectorAll("button").forEach((btn,i)=>{
+        btn.innerText = options[i];
     });
-    document.getElementById("solution").innerText="";
-    document.getElementById("userMessage").value="";
-    document.getElementById("questionBox").style.display="flex";
+
+    questionBox.style.display="flex";
 }
 
-function checkAnswer(btn){
-    if(btn.innerText===currentQuestion.ans){
-        document.getElementById("questionBox").style.display="none";
-        countdownStart();
+/* ================= CHECK ANSWER ================= */
+function checkAnswer(el){
+    if(el.innerText === currentQuestion.ans){
+        questionBox.style.display="none";
+        // 3 saniye sayıp sonra tekrar başlat
+        let count=3;
+        solutionText.innerText="Doğru! Başlıyor...";
+        let interval = setInterval(()=>{
+            solutionText.innerText = "Başlıyor... " + count;
+            count--;
+            if(count<0){
+                clearInterval(interval);
+                resetGame();
+                state="play";
+            }
+        },1000);
     }else{
-        document.getElementById("solution").innerText="Yanlış! "+currentQuestion.sol;
+        solutionText.innerText = "Yanlış! " + currentQuestion.sol;
         setTimeout(()=>{
-            document.getElementById("questionBox").style.display="none";
-            resetGame();
+            questionBox.style.display="none";
             state="menu";
-        },3000);
+            menuBox.style.display="flex";
+        },2000);
     }
 }
 
-/* ================= COUNTDOWN ================= */
-function countdownStart(){
-    let count=3;
-    state="countdown";
-    const countdownInterval=setInterval(()=>{
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(bg,0,0,canvas.width,canvas.height);
-        ctx.fillStyle="white";
-        ctx.font=`${Math.floor(canvas.height*0.2)}px Arial`;
-        ctx.textAlign="center";
-        ctx.fillText(count,canvas.width/2,canvas.height/2);
-        count--;
-        if(count<0){
-            clearInterval(countdownInterval);
-            resetGame();
-            state="play";
-        }
-    },1000);
-}
-
-/* ================= UPDATE ================= */
+/* ================= GAME UPDATE ================= */
 function update(){
+    if(state==="menu"){
+        animateMenu();
+        return;
+    }
     if(state!=="play") return;
-    bird.vy+=0.4;
-    bird.y+=bird.vy;
-    bird.frame+=0.2;
+
+    bird.vy += 0.5;
+    bird.y += bird.vy;
+    bird.frame += 0.2;
 
     pipes.forEach(p=>{
-        p.x-=2;
-        if(bird.x+canvas.width*0.05>p.x &&
-           bird.x<p.x+canvas.width*0.07 &&
-           (bird.y<p.top || bird.y+canvas.height*0.06>p.top+canvas.height*0.28)
-        ){
-            state="gameover";
-            setTimeout(()=>{ askQuestion(); },500);
-        }
-        if(!p.scored && p.x+canvas.width*0.07<bird.x){
+        p.x -=4;
+        if(bird.x+40>p.x && bird.x<p.x+60 &&
+           (bird.y< p.top || bird.y+40>p.top+180)){
+               state="gameover";
+               setTimeout(askQuestion,500);
+           }
+        if(!p.passed && p.x+60<bird.x){
             score++;
-            p.scored=true;
+            p.passed=true;
         }
     });
-    if(bird.y>canvas.height-50 || bird.y<0){
+
+    if(bird.y>canvas.height-100 || bird.y<0){
         state="gameover";
-        setTimeout(()=>{ askQuestion(); },500);
+        setTimeout(askQuestion,500);
+    }
+
+    // Spawn new pipes
+    if(pipes.length===0 || pipes[pipes.length-1].x<canvas.width-300){
+        spawnPipe();
     }
 }
 
 /* ================= DRAW ================= */
+function drawScore(x,y){
+    let s = score.toString();
+    let w = 30;
+    for(let i=0;i<s.length;i++){
+        let n = s[i];
+        ctx.drawImage(scoreSprites[n],x+i*w,y,30,40);
+    }
+}
+
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
     pipes.forEach(p=>{
-        ctx.drawImage(pipeImg,p.x,p.top-320,canvas.width*0.07,320);
-        ctx.drawImage(pipeImg,p.x,p.top+canvas.height*0.14,canvas.width*0.07,320);
+        ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
+        ctx.drawImage(pipeImg,p.x,p.top+180,60,320);
     });
 
-    if(state!=="menu" && state!=="countdown"){
-        ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,canvas.width*0.05,canvas.height*0.06);
-    }
+    ctx.drawImage(baseImg,0,canvas.height-100,canvas.width,100);
 
-    ctx.drawImage(baseImg,0,canvas.height-50,canvas.width,50);
+    // bird
+    ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,50,40);
 
-    if(state==="menu"){
-        ctx.drawImage(messageImg,canvas.width/2-110,canvas.height/2-60,220,120);
-    }
+    // score
+    drawScore(20,20);
 
     if(state==="gameover"){
-        ctx.drawImage(gameoverImg,canvas.width/2-120,canvas.height/2-60,240,120);
-    }
-
-    drawScore();
-}
-
-/* ================= DRAW SCORE ================= */
-function drawScore(){
-    let s=score.toString();
-    for(let i=0;i<s.length;i++){
-        let d=s[i];
-        if(scoreDigits[d])
-            ctx.drawImage(scoreDigits[d], 20+i*50, 20, 50, 50);
+        ctx.drawImage(gameoverImg,canvas.width/2-150,200,300,100);
     }
 }
 
