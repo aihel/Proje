@@ -14,6 +14,7 @@ body{
 canvas{
     display:block;
 }
+
 #intro{
     position:fixed;
     inset:0;
@@ -25,28 +26,53 @@ canvas{
     font-weight:bold;
     background:black;
 }
+
 #questionBox{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.9);
+    background:rgba(0,0,0,0.95);
     display:none;
     justify-content:center;
-    align-items:center;
+    align-items:flex-start;
     flex-direction:column;
-    gap:20px;
+    gap:15px;
     text-align:center;
+    padding-top:50px;
 }
-input{
-    padding:10px;
-    width:180px;
-    text-align:center;
-    font-size:1.2em;
+
+#questionText{
+    color:white;
+    font-size:1.5em;
+    margin-bottom:20px;
+    max-width:80%;
 }
-button{
-    padding:10px 25px;
+
+.answers{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.answers button{
+    padding:12px 25px;
+    font-size:1.1em;
     border:none;
     border-radius:8px;
     cursor:pointer;
+    background:#444;
+    color:white;
+}
+
+#solution{
+    color:yellow;
+    margin-top:15px;
+    font-size:1.1em;
+}
+
+#userMessage{
+    margin-top:20px;
+    padding:8px;
+    width:200px;
 }
 </style>
 </head>
@@ -58,8 +84,13 @@ button{
 
 <div id="questionBox">
     <h2 id="questionText"></h2>
-    <input id="answerInput" placeholder="Cevap">
-    <button onclick="checkAnswer()">Kontrol</button>
+    <div class="answers">
+        <button id="btn1" onclick="checkAnswer(this)">A</button>
+        <button id="btn2" onclick="checkAnswer(this)">B</button>
+        <button id="btn3" onclick="checkAnswer(this)">C</button>
+        <button id="btn4" onclick="checkAnswer(this)">D</button>
+    </div>
+    <input id="userMessage" placeholder="Mesajınızı yazın...">
     <p id="solution"></p>
 </div>
 
@@ -108,16 +139,45 @@ const scoreDigits={
 };
 
 /* ================= QUESTIONS ================= */
-const questions=[];
-for(let i=0;i<90;i++){
-    let a=Math.floor(Math.random()*8)+2;
-    let b=Math.floor(Math.random()*9)+1;
-    questions.push({
-        q:`${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
-        ans:`${b}`,
-        sol:`İşçi sayısı artarsa süre azalır. Cevap: ${b}`
-    });
-}
+const questions=[
+    {
+        q:"Ali, 6 işçiyle bir işi 12 günde tamamlıyor. Eğer işçi sayısı 3 katına çıkarılırsa işi kaç günde bitirir? Bu hesaplamada işçiler eşit şekilde çalışıyor.",
+        options:["4","6","12","8"],
+        ans:"4",
+        sol:"İşçi sayısı 3 katına çıkarsa süre 3 kat azalır. 12/3=4"
+    },
+    {
+        q:"Bir araba 240 km yolu 4 saatte gidiyor. Aynı hızla 360 km yolu kaç saatte gider?",
+        options:["4","5","6","7"],
+        ans:"6",
+        sol:"360/240*4=6 saat"
+    },
+    {
+        q:"Bir işçi bir fabrikada 8 saatte 160 ürün üretiyor. 4 işçi aynı hızda çalışırsa 8 saatte kaç ürün üretir?",
+        options:["320","480","160","400"],
+        ans:"640",
+        sol:"4 işçi 8 saatte 4*160=640 ürün üretir"
+    },
+    {
+        q:"5 kişi bir işi 20 günde bitiriyor. Eğer kişi sayısı 10 olursa aynı iş kaç günde biter?",
+        options:["10","15","20","25"],
+        ans:"10",
+        sol:"Kişi sayısı 2 katına çıkarsa süre yarıya iner. 20/2=10"
+    },
+    {
+        q:"Bir depoda 12 işçi 18 günde çalışıyor. 6 işçi çalışırsa aynı işi kaç günde bitirir?",
+        options:["18","24","36","12"],
+        ans:"36",
+        sol:"İşçi sayısı yarıya düşerse süre 2 katına çıkar. 18*2=36"
+    },
+    {
+        q:"Bir fabrikada 9 işçi 27 günde bir ürün üretiyor. İşçi sayısı 3 katına çıkarsa ürün kaç günde üretilir?",
+        options:["9","27","12","15"],
+        ans:"9",
+        sol:"27/3=9"
+    }
+];
+
 let usedQuestions=[];
 let currentQuestion=null;
 
@@ -133,7 +193,7 @@ let introTime=0;
 function introLoop(){
     introTime++;
     introDiv.style.opacity=Math.min(introTime/60,1);
-    if(introTime<180){ // 3 saniye
+    if(introTime<180){
         requestAnimationFrame(introLoop);
     }else{
         state="menu";
@@ -178,14 +238,17 @@ function askQuestion(){
     usedQuestions.push(currentQuestion);
 
     document.getElementById("questionText").innerText=currentQuestion.q;
+    const btns=document.querySelectorAll(".answers button");
+    currentQuestion.options.forEach((opt,i)=>{
+        btns[i].innerText=opt;
+    });
     document.getElementById("solution").innerText="";
-    document.getElementById("answerInput").value="";
+    document.getElementById("userMessage").value="";
     document.getElementById("questionBox").style.display="flex";
 }
 
-function checkAnswer(){
-    const val=document.getElementById("answerInput").value;
-    if(val===currentQuestion.ans){
+function checkAnswer(btn){
+    if(btn.innerText===currentQuestion.ans){
         document.getElementById("questionBox").style.display="none";
         countdownStart();
     }else{
@@ -194,7 +257,7 @@ function checkAnswer(){
             document.getElementById("questionBox").style.display="none";
             resetGame();
             state="menu";
-        },2000);
+        },3000);
     }
 }
 
