@@ -2,21 +2,16 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Math(Meth) Project (By OmerAsaf</title>
+<title>Math(Meth) Project Man(BySansiAsaf)</title>
 <style>
 body{
     margin:0;
     background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    font-family:Arial;
     overflow:hidden;
+    font-family:Arial;
 }
 canvas{
-    border-radius:15px;
-    box-shadow:0 0 25px rgba(255,255,255,0.15);
+    display:block;
     position:absolute;
     top:0;
     left:0;
@@ -84,7 +79,6 @@ canvas{
     cursor:pointer;
 }
 
-/* Info panel */
 #infoBox{
     position:fixed;
     top:60px;
@@ -117,7 +111,7 @@ canvas{
 
 <audio id="bgMusic" src="88.m4a" loop autoplay></audio>
 
-<canvas id="canvas" width="600" height="800"></canvas>
+<canvas id="canvas"></canvas>
 
 <div id="questionBox">
     <h2 id="questionText"></h2>
@@ -140,6 +134,10 @@ canvas{
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
 const questionBox = document.getElementById("questionBox");
 const questionText = document.getElementById("questionText");
 const solutionText = document.getElementById("solution");
@@ -197,7 +195,7 @@ for(let i=1;i<=90;i++){
 }
 
 /* ================= GAME VARIABLES ================= */
-let bird = {x:150,y:350,vy:0,frame:0};
+let bird = {x:150,y:canvas.height/2,vy:0,frame:0};
 let pipes = [];
 let state = "menu";
 let score = 0;
@@ -207,21 +205,21 @@ let currentQuestion = null;
 let menuCounter = 0;
 function animateMenu(){
     menuCounter += 0.05;
-    bird.y = 350 + Math.sin(menuCounter)*20;
+    bird.y = canvas.height/2 + Math.sin(menuCounter)*40;
     bird.frame += 0.2;
 }
 
 /* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
-    bird.y=350;
+    bird.y=canvas.height/2;
     bird.vy=0;
     bird.frame=0;
     score=0;
 }
 
 function spawnPipe(){
-    let top = Math.random()*300 + 100;
+    let top = Math.random()*(canvas.height-300-200)+200;
     pipes.push({x:canvas.width,top:top,passed:false});
 }
 
@@ -274,11 +272,11 @@ function startGame(){
 /* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="play"){
-        bird.vy=-6;
+        bird.vy=-10; // zıplama daha güçlü
     }
 });
 
-messageImg.addEventListener("click",()=>{ // Menüde tıklayınca oyun başlar
+messageImg.addEventListener("click",()=>{ 
     startGame();
 });
 
@@ -301,12 +299,13 @@ function update(){
     }
     if(state!=="play") return;
 
-    bird.vy += 0.5;
+    bird.vy += 0.6;
     bird.y += bird.vy;
     bird.frame += 0.2;
 
     pipes.forEach(p=>{
-        p.x -=4;
+        p.x -=6; // hız arttı
+        // Gelişmiş çarpma kontrolü
         if(bird.x+50>p.x && bird.x<p.x+80 &&
            (bird.y< p.top || bird.y+50>p.top+180)){
                state="gameover";
@@ -323,7 +322,7 @@ function update(){
         setTimeout(()=>askQuestion(),1000);
     }
 
-    if(pipes.length===0 || pipes[pipes.length-1].x<canvas.width-300){
+    if(pipes.length===0 || pipes[pipes.length-1].x<canvas.width-400){
         spawnPipe();
     }
 }
@@ -331,11 +330,11 @@ function update(){
 /* ================= DRAW ================= */
 function drawScore(){
     let s = score.toString();
-    let totalWidth = s.length*35;
+    let totalWidth = s.length*50;
     let startX = canvas.width/2 - totalWidth/2;
     for(let i=0;i<s.length;i++){
         let n = s[i];
-        ctx.drawImage(scoreSprites[n],startX+i*35,20,35,50);
+        ctx.drawImage(scoreSprites[n],startX+i*50,50,50,70);
     }
 }
 
