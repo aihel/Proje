@@ -1,1117 +1,231 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>THE NEWS | TÜRKİYE HABERLERİ</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', 'Helvetica', sans-serif;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-        }
-
-        #app {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-        }
-
-        /* ========== SİDE BAR ========== */
-        .side-bar {
-            position: fixed;
-            top: 0;
-            left: -320px;
-            width: 300px;
-            height: 100vh;
-            background: #111;
-            border-right: 2px solid #333;
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
-            padding: 100px 20px 20px;
-            box-shadow: 5px 0 30px rgba(0,0,0,0.5);
-        }
-
-        .side-bar.open {
-            left: 0;
-        }
-
-        .menu-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 60px;
-            height: 60px;
-            background: #111;
-            border: 2px solid #333;
-            border-radius: 10px;
-            cursor: pointer;
-            z-index: 1001;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .menu-btn:hover {
-            background: #222;
-            border-color: #666;
-        }
-
-        .menu-btn span {
-            width: 35px;
-            height: 4px;
-            background: white;
-            transition: all 0.3s;
-        }
-
-        .menu-btn.open span:nth-child(1) {
-            transform: rotate(45deg) translate(8px, 8px);
-        }
-
-        .menu-btn.open span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .menu-btn.open span:nth-child(3) {
-            transform: rotate(-45deg) translate(8px, -8px);
-        }
-
-        .side-bar-item {
-            width: 100%;
-            padding: 25px;
-            margin: 15px 0;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: white;
-            font-size: 1.8em;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-            border-left: 5px solid transparent;
-        }
-
-        .side-bar-item:hover {
-            background: #222;
-            border-left-color: #ffd700;
-            transform: translateX(5px);
-        }
-
-        .side-bar-item.math {
-            border-left-color: #3498db;
-        }
-
-        .side-bar-item.news {
-            border-left-color: #e74c3c;
-        }
-
-        .credits-side {
-            position: absolute;
-            bottom: 30px;
-            left: 20px;
-            right: 20px;
-            padding: 20px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: #888;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1.3em;
-        }
-
-        .credits-side:hover {
-            color: white;
-            border-color: #666;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            z-index: 999;
-            backdrop-filter: blur(5px);
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        /* ========== EKRANLAR ========== */
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            background: #000;
-            color: white;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        /* ========== GAZETE EKRANI ========== */
-        #newsScreen {
-            overflow-y: auto;
-            background: #000;
-        }
-
-        .news-header {
-            background: #111;
-            padding: 20px 20px 20px 100px;
-            text-align: center;
-            border-bottom: 2px solid #333;
-            position: relative;
-        }
-
-        .news-header h1 {
-            font-size: 4em;
-            font-family: 'Times New Roman', serif;
-            font-weight: 300;
-            letter-spacing: 5px;
-            color: white;
-        }
-
-        .lang-switch {
-            position: absolute;
-            top: 25px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .lang-switch button {
-            width: 60px;
-            height: 45px;
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1.2em;
-        }
-
-        .lang-switch button:hover {
-            background: #333;
-            border-color: #666;
-        }
-
-        .news-content {
-            padding: 30px;
-            margin-left: 70px;
-        }
-
-        .cover-page {
-            min-height: calc(100vh - 120px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 50px;
-        }
-
-        .cover-gif {
-            width: 80%;
-            max-width: 800px;
-            height: 400px;
-            border: 4px solid #333;
-            overflow: hidden;
-            background: #111;
-        }
-
-        .cover-gif img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%);
-        }
-
-        .cover-title {
-            font-size: 5em;
-            font-family: 'Times New Roman', serif;
-            color: white;
-            border-top: 2px solid #333;
-            padding-top: 30px;
-        }
-
-        .news-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .news-card {
-            background: #111;
-            padding: 25px;
-            border: 1px solid #333;
-            transition: all 0.3s;
-        }
-
-        .news-card:hover {
-            border-color: #666;
-            transform: translateX(5px);
-        }
-
-        .news-meta {
-            color: #888;
-            font-size: 1em;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .news-title {
-            font-size: 2em;
-            color: white;
-            margin-bottom: 15px;
-        }
-
-        .news-image {
-            width: 100%;
-            height: 200px;
-            background: #222;
-            margin: 15px 0;
-            border: 2px solid #333;
-            overflow: hidden;
-        }
-
-        .news-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%);
-        }
-
-        .news-text {
-            color: #ccc;
-            line-height: 1.8;
-            font-size: 1.1em;
-        }
-
-        .last-page {
-            min-height: calc(100vh - 120px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 60px;
-        }
-
-        .last-page img {
-            width: 400px;
-            height: 400px;
-            border: 6px solid #333;
-            object-fit: cover;
-            filter: grayscale(100%);
-        }
-
-        .last-message {
-            font-size: 4em;
-            color: white;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            padding: 20px;
-            background: #111;
-            border-top: 2px solid #333;
-            margin-left: 70px;
-        }
-
-        .page-btn {
-            padding: 15px 40px;
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1.2em;
-        }
-
-        .page-btn:hover:not(:disabled) {
-            background: #333;
-            border-color: #666;
-        }
-
-        .page-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .page-info {
-            color: white;
-            font-size: 1.4em;
-        }
-
-        /* ========== MATEMATİK EKRANI ========== */
-        #mathScreen {
-            background: #1a2634;
-            position: relative;
-        }
-
-        .math-header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(22, 33, 62, 0.9);
-            padding: 15px 20px 15px 100px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            z-index: 10;
-            backdrop-filter: blur(5px);
-            border-bottom: 2px solid #ffd700;
-        }
-
-        .math-header button {
-            background: #ffd700;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1.2em;
-        }
-
-        .game-score {
-            font-size: 3em;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 2px 2px 0 #000;
-        }
-
-        .game-container {
-            width: 100vw;
-            height: 100vh;
-            background: #4ec0ca;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #mathCanvas {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-            background: #4ec0ca;
-        }
-
-        /* SORU MODAL */
-        .question-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        .question-modal.active {
-            display: flex;
-        }
-
-        .question-box {
-            background: #16213e;
-            padding: 50px;
-            border-radius: 40px;
-            max-width: 900px;
-            width: 80%;
-            border: 5px solid #ffd700;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-        }
-
-        .question-text {
-            color: white;
-            font-size: 2em;
-            line-height: 1.6;
-            margin-bottom: 40px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .answer-area {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .math-input {
-            padding: 25px;
-            font-size: 2em;
-            border: 4px solid #ffd700;
-            border-radius: 20px;
-            background: #1a1a2e;
-            color: white;
-            text-align: center;
-            width: 100%;
-        }
-
-        .math-buttons {
-            display: flex;
-            gap: 20px;
-        }
-
-        .math-btn {
-            flex: 1;
-            padding: 20px;
-            border: none;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1.8em;
-            transition: all 0.3s;
-        }
-
-        .math-btn:active {
-            transform: scale(0.95);
-        }
-
-        .submit-btn {
-            background: #27ae60;
-            color: white;
-        }
-
-        .solve-btn {
-            background: #f39c12;
-            color: white;
-        }
-
-        .feedback-box {
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.8em;
-        }
-
-        .feedback-success {
-            background: #27ae60;
-            color: white;
-            animation: pulse 0.5s;
-        }
-
-        .feedback-error {
-            background: #e74c3c;
-            color: white;
-            animation: shake 0.5s;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
-
-        .explanation-box {
-            background: #2980b9;
-            padding: 25px;
-            border-radius: 20px;
-            margin-top: 20px;
-            font-size: 1.6em;
-            line-height: 1.8;
-            color: white;
-        }
-
-        /* MODAL */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #111;
-            padding: 40px;
-            border: 3px solid #333;
-            z-index: 2001;
-            width: 90%;
-            max-width: 500px;
-            color: white;
-        }
-
-        .modal.active, .modal-overlay.active {
-            display: block;
-        }
-
-        .modal h2 {
-            text-align: center;
-            font-size: 2.5em;
-            margin-bottom: 40px;
-            color: white;
-        }
-
-        .credit-item {
-            background: #1a1a1a;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 8px solid #666;
-        }
-
-        .credit-name {
-            font-weight: bold;
-            color: white;
-            font-size: 1.8em;
-            margin-bottom: 8px;
-        }
-
-        .credit-role {
-            color: #888;
-            font-size: 1.2em;
-        }
-
-        .close-modal {
-            background: #222;
-            color: white;
-            padding: 15px;
-            border: 1px solid #444;
-            width: 100%;
-            cursor: pointer;
-            margin-top: 30px;
-            font-size: 1.3em;
-        }
-
-        /* MÜZİK */
-        .music-control {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 100;
-        }
-
-        .music-btn {
-            width: 60px;
-            height: 60px;
-            background: #222;
-            color: white;
-            border: 2px solid #444;
-            border-radius: 30px;
-            font-size: 1.8em;
-            cursor: pointer;
-        }
-
-        @media (orientation: landscape) {
-            .news-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<title>The News Project</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{
+    background:black;
+    color:white;
+    text-align:center;
+}
+
+/* SCREENS */
+.screen{display:none;padding:20px}
+.screen.active{display:block;animation:fade 0.4s ease}
+@keyframes fade{
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:none}
+}
+
+button{
+    padding:10px 25px;
+    margin:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* NEWS */
+.news{
+    max-width:850px;
+    margin:auto;
+    text-align:left;
+    line-height:1.7;
+}
+
+.slide{
+    display:none;
+}
+.slide.active{
+    display:block;
+    animation:fade 0.4s ease;
+}
+
+.slide img{
+    width:100%;
+    border-radius:12px;
+    margin:15px 0;
+}
+
+/* GAME */
+canvas{
+    background:black;
+    border-radius:15px;
+    margin-top:10px;
+}
+</style>
 </head>
 <body>
-    <!-- MENÜ BUTONU -->
-    <div class="menu-btn" id="menuBtn" onclick="toggleSideBar()">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
 
-    <!-- SİDE BAR -->
-    <div class="side-bar" id="sideBar">
-        <div class="side-bar-item news" onclick="showNewsScreen(); toggleSideBar();">
-            📰 THE NEWS
-        </div>
-        <div class="side-bar-item math" onclick="showMathScreen(); toggleSideBar();">
-            📐 MATEMATİK
-        </div>
-        <div class="credits-side" onclick="showCredits(); toggleSideBar();">
-            👥 EMEĞİ GEÇENLER
-        </div>
-    </div>
+<!-- MENU -->
+<div id="menu" class="screen active">
+    <h1>Project Selection</h1>
+    <button onclick="showNews()">English News Project</button>
+    <button onclick="showGame()">Math Game Project</button>
+</div>
 
-    <!-- OVERLAY -->
-    <div class="overlay" id="overlay" onclick="toggleSideBar()"></div>
+<!-- NEWS -->
+<div id="news" class="screen">
+    <h1>The News</h1>
 
-    <div id="app">
-        <!-- GAZETE EKRANI -->
-        <div id="newsScreen" class="screen active">
-            <div class="news-header">
-                <h1>THE NEWS</h1>
-                <div class="lang-switch">
-                    <button onclick="setLanguage('tr')">TR</button>
-                    <button onclick="setLanguage('en')">EN</button>
-                </div>
-            </div>
+    <div id="slides" class="news"></div>
 
-            <div class="news-content" id="newsContent"></div>
+    <button onclick="prevSlide()">◀</button>
+    <button onclick="nextSlide()">▶</button>
+    <button onclick="goMenu()">Menu</button>
+</div>
 
-            <div class="pagination">
-                <button class="page-btn" id="prevNewsBtn" onclick="changePage(-1)">← ÖNCEKİ</button>
-                <span class="page-info" id="newsPageInfo">1/17</span>
-                <button class="page-btn" id="nextNewsBtn" onclick="changePage(1)">SONRAKİ →</button>
-            </div>
-        </div>
+<!-- GAME -->
+<div id="game" class="screen">
+    <canvas id="canvas" width="400" height="600"></canvas>
+    <br>
+    <button onclick="goMenu()">Menu</button>
+</div>
 
-        <!-- MATEMATİK EKRANI -->
-        <div id="mathScreen" class="screen">
-            <div class="math-header">
-                <button onclick="showNewsScreen()">← GAZETE</button>
-                <span class="game-score" id="mathScore">0</span>
-            </div>
-            
-            <div class="game-container">
-                <canvas id="mathCanvas" width="1920" height="1080"></canvas>
-            </div>
+<script>
 
-            <!-- SORU MODAL -->
-            <div class="question-modal" id="questionModal">
-                <div class="question-box">
-                    <div class="question-text" id="questionDisplay"></div>
-                    <div class="answer-area">
-                        <input type="number" id="answerInput" class="math-input" placeholder="CEVABINI YAZ">
-                        <div class="math-buttons">
-                            <button class="math-btn submit-btn" onclick="checkAnswer()">CEVAPLA</button>
-                            <button class="math-btn solve-btn" onclick="showSolution()">ÇÖZÜM</button>
-                        </div>
-                        <div id="mathFeedback" class="feedback-box"></div>
-                        <div id="mathExplanation" class="explanation-box" style="display: none;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+/* SCREEN SYSTEM */
+function goMenu(){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById("menu").classList.add("active");
+}
+function showNews(){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById("news").classList.add("active");
+}
+function showGame(){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById("game").classList.add("active");
+}
 
-    <!-- MODAL -->
-    <div class="modal-overlay" id="modalOverlay" onclick="hideCredits()"></div>
-    <div class="modal" id="creditsModal">
-        <h2>🌟 EMEĞİ GEÇENLER</h2>
-        <div class="credit-item">
-            <div class="credit-name">Ömer Asaf</div>
-            <div class="credit-role">Developer • Tasarımcı</div>
-        </div>
-        <div class="credit-item">
-            <div class="credit-name">Necati Kaan</div>
-            <div class="credit-role">Fikir Veren • Konfor Odaklı Çözümler</div>
-        </div>
-        <div class="credit-item">
-            <div class="credit-name">Mehmet Karagöz</div>
-            <div class="credit-role">Kod Hatalarını Bildiren • Düzelten</div>
-        </div>
-        <button class="close-modal" onclick="hideCredits()">KAPAT</button>
-    </div>
+/* ================= NEWS AUTO ASSETS ================= */
 
-    <!-- MÜZİK -->
-    <div class="music-control">
-        <button class="music-btn" id="musicBtn" onclick="toggleMusic()">🔊</button>
-    </div>
-    <audio id="bgMusic" loop><source src="assets/88.m4a" type="audio/mp4"></audio>
+const slidesDiv = document.getElementById("slides");
 
-    <script>
-        // ========== SİDE BAR ==========
-        function toggleSideBar() {
-            document.getElementById('sideBar').classList.toggle('open');
-            document.getElementById('menuBtn').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('active');
+for(let i=1;i<=30;i++){
+    const slide = document.createElement("div");
+    slide.className = "slide";
+    if(i===1) slide.classList.add("active");
+
+    slide.innerHTML = `
+        <img src="assets/${i}.jpg">
+        <h2>News Title ${i}</h2>
+        <p>
+        This is sample school news content. 
+        Students can read and understand easily.
+        Educational project design.
+        </p>
+    `;
+    slidesDiv.appendChild(slide);
+}
+
+let currentSlide = 0;
+const slides = document.querySelectorAll(".slide");
+
+function nextSlide(){
+    slides[currentSlide].classList.remove("active");
+    currentSlide = (currentSlide + 1) % slides.length;
+    slides[currentSlide].classList.add("active");
+}
+function prevSlide(){
+    slides[currentSlide].classList.remove("active");
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    slides[currentSlide].classList.add("active");
+}
+
+/* ================= FLAPPY BIRD ================= */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function load(name){
+    const i = new Image();
+    i.src = "sprites/" + name;
+    return i;
+}
+
+const bg = load("background-day.png");
+const baseImg = load("base.png");
+const pipeImg = load("pipe-green.png");
+
+const birdFrames = [
+    load("bluebird-upflap.png"),
+    load("bluebird-midflap.png"),
+    load("bluebird-downflap.png")
+];
+
+let bird = {x:80,y:200,vy:0,frame:0};
+let pipes = [];
+let state = "menu";
+
+canvas.addEventListener("click",()=>{
+    if(state==="menu"){ reset(); state="play"; bird.vy=-7; return; }
+    if(state==="play"){ bird.vy=-7; }
+});
+
+function reset(){
+    pipes=[];
+    bird.y=200;
+    bird.vy=0;
+}
+
+function spawnPipe(){
+    let top = Math.random()*250+50;
+    pipes.push({x:400,top});
+}
+
+setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
+
+function update(){
+    if(state!=="play") return;
+
+    bird.vy += 0.4;
+    bird.y += bird.vy;
+    bird.frame += 0.2;
+
+    pipes.forEach(p=>{
+        p.x -= 2;
+
+        if(
+            bird.x+30>p.x &&
+            bird.x<p.x+60 &&
+            (bird.y<p.top || bird.y+30>p.top+140)
+        ){
+            state="menu";
+            reset();
         }
+    });
+}
 
-        // ========== DEĞİŞKENLER ==========
-        let currentLang = 'tr';
-        let currentPage = 1;
-        const totalPages = 17;
-        let isMusicOn = true;
-        
-        // Oyun
-        let score = 0;
-        let gameActive = false;
-        let gameOver = false;
-        let showingQuestion = false;
-        let currentQ = null;
-        let usedQuestions = [];
-        let bird, pipes, frame;
-        let animId = null;
-        
-        const canvas = document.getElementById('mathCanvas');
-        const ctx = canvas.getContext('2d');
+function draw(){
+    ctx.clearRect(0,0,400,600);
+    ctx.drawImage(bg,0,0,400,600);
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+    pipes.forEach(p=>{
+        ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
+        ctx.drawImage(pipeImg,p.x,p.top+140,60,320);
+    });
 
-        // ========== 90 MATEMATİK SORUSU ==========
-        const questions = [
-            { q: "3 kg elma 18 TL ise, 5 kg elma kaç TL?", a: 30, c: "1 kg = 6 TL, 5 kg = 30 TL" },
-            { q: "4 kg portakal 28 TL ise, 7 kg portakal kaç TL?", a: 49, c: "1 kg = 7 TL, 7 kg = 49 TL" },
-            { q: "2 kg domates 14 TL ise, 6 kg domates kaç TL?", a: 42, c: "1 kg = 7 TL, 6 kg = 42 TL" },
-            { q: "5 kg patates 25 TL ise, 9 kg patates kaç TL?", a: 45, c: "1 kg = 5 TL, 9 kg = 45 TL" },
-            { q: "3 kg üzüm 24 TL ise, 8 kg üzüm kaç TL?", a: 64, c: "1 kg = 8 TL, 8 kg = 64 TL" },
-            { q: "6 kg muz 42 TL ise, 10 kg muz kaç TL?", a: 70, c: "1 kg = 7 TL, 10 kg = 70 TL" },
-            { q: "4 kg kiraz 36 TL ise, 7 kg kiraz kaç TL?", a: 63, c: "1 kg = 9 TL, 7 kg = 63 TL" },
-            { q: "2 kg çilek 22 TL ise, 5 kg çilek kaç TL?", a: 55, c: "1 kg = 11 TL, 5 kg = 55 TL" },
-            { q: "8 kg armut 48 TL ise, 12 kg armut kaç TL?", a: 72, c: "1 kg = 6 TL, 12 kg = 72 TL" },
-            { q: "5 kg şeftali 40 TL ise, 8 kg şeftali kaç TL?", a: 64, c: "1 kg = 8 TL, 8 kg = 64 TL" },
-            { q: "2 işçi bir işi 12 günde bitiriyorsa, 4 işçi kaç günde bitirir?", a: 6, c: "İşçi sayısı 2 katı, süre yarıya düşer: 6 gün" },
-            { q: "3 işçi bir işi 9 günde bitiriyorsa, 6 işçi kaç günde bitirir?", a: 4.5, c: "3×9=27, 27÷6=4.5 gün" },
-            { q: "4 işçi bir işi 8 günde bitiriyorsa, 2 işçi kaç günde bitirir?", a: 16, c: "4×8=32, 32÷2=16 gün" },
-            { q: "5 işçi bir işi 10 günde bitiriyorsa, 10 işçi kaç günde bitirir?", a: 5, c: "5×10=50, 50÷10=5 gün" },
-            { q: "6 işçi bir işi 12 günde bitiriyorsa, 9 işçi kaç günde bitirir?", a: 8, c: "6×12=72, 72÷9=8 gün" },
-            { q: "8 kg elma 48 TL ise, 11 kg elma kaç TL?", a: 66, c: "1 kg = 6 TL, 11 kg = 66 TL" },
-            { q: "90 km/s hızla 4 saatte gidilen yol, 60 km/s hızla kaç saatte gidilir?", a: 6, c: "Yol: 90×4=360 km, 360÷60=6 saat" },
-            { q: "2 defter 16 TL ise, 5 defter kaç TL?", a: 40, c: "1 defter = 8 TL, 5 defter = 40 TL" },
-            { q: "3 kalem 12 TL ise, 7 kalem kaç TL?", a: 28, c: "1 kalem = 4 TL, 7 kalem = 28 TL" },
-            { q: "4 silgi 20 TL ise, 9 silgi kaç TL?", a: 45, c: "1 silgi = 5 TL, 9 silgi = 45 TL" },
-            { q: "5 kitap 75 TL ise, 8 kitap kaç TL?", a: 120, c: "1 kitap = 15 TL, 8 kitap = 120 TL" },
-            { q: "6 cetvel 18 TL ise, 10 cetvel kaç TL?", a: 30, c: "1 cetvel = 3 TL, 10 cetvel = 30 TL" },
-            { q: "7 boya 56 TL ise, 9 boya kaç TL?", a: 72, c: "1 boya = 8 TL, 9 boya = 72 TL" },
-            { q: "8 kalemtraş 40 TL ise, 12 kalemtraş kaç TL?", a: 60, c: "1 kalemtraş = 5 TL, 12 kalemtraş = 60 TL" },
-            { q: "9 kutu 81 TL ise, 13 kutu kaç TL?", a: 117, c: "1 kutu = 9 TL, 13 kutu = 117 TL" },
-            { q: "10 kg 70 TL ise, 15 kg kaç TL?", a: 105, c: "1 kg = 7 TL, 15 kg = 105 TL" },
-            { q: "12 metre 96 TL ise, 8 metre kaç TL?", a: 64, c: "1 metre = 8 TL, 8 metre = 64 TL" },
-            { q: "7 litre 56 TL ise, 10 litre kaç TL?", a: 80, c: "1 litre = 8 TL, 10 litre = 80 TL" },
-            { q: "9 saat 360 km ise, 5 saatte kaç km?", a: 200, c: "Saatte 40 km, 5×40=200 km" },
-            { q: "4 günde 120 sayfa okuyan, 7 günde kaç sayfa okur?", a: 210, c: "Günde 30 sayfa, 7×30=210 sayfa" }
-        ];
+    if(state!=="menu"){
+        ctx.drawImage(
+            birdFrames[Math.floor(bird.frame)%3],
+            bird.x,bird.y,40,30
+        );
+    }
 
-        while (questions.length < 90) {
-            for (let i = 0; i < 30; i++) {
-                if (questions.length >= 90) break;
-                let yeni = JSON.parse(JSON.stringify(questions[i]));
-                yeni.q = yeni.q.replace("elma", "ayva").replace("kg", "kutu");
-                questions.push(yeni);
-            }
-        }
+    ctx.drawImage(baseImg,0,550,400,50);
+}
 
-        // ========== 30 TEKRARSIZ HABER ==========
-        const haberler = [
-            { tr: "İstanbul metrosu hizmete girdi", en: "Istanbul metro opened", icerik_tr: "15 km'lik yeni metro hattı, 10 istasyon, günde 500 bin yolcu taşıyacak. Proje 5 yılda tamamlandı.", icerik_en: "15 km new metro line, 10 stations, 500k passengers daily. Project completed in 5 years." },
-            { tr: "Antalya turizm rekoru", en: "Antalya tourism record", icerik_tr: "2025'te 20 milyon turist, 15 milyar dolar gelir. En çok Rus, Alman ve İngiliz turistler geldi.", icerik_en: "20 million tourists in 2025, $15B revenue. Most tourists from Russia, Germany and UK." },
-            { tr: "Yerli kanser ilacı başarılı", en: "Domestic cancer drug successful", icerik_tr: "500 hastada %90 başarı, 2026'da kullanımda. TÜBİTAK destekli 10 yıllık proje.", icerik_en: "90% success in 500 patients, available in 2026. TÜBİTAK-supported 10-year project." },
-            { tr: "İlk Türk uzay aracı fırlatıldı", en: "First Turkish spacecraft launched", icerik_tr: "SpaceX ile Ay'a gönderildi, 2026'da iniş yapacak. Tarihi an canlı yayınlandı.", icerik_en: "Launched to Moon with SpaceX, landing in 2026. Historic moment broadcast live." },
-            { tr: "Konya'da rekor buğday hasadı", en: "Record wheat harvest in Konya", icerik_tr: "Üretim %30 arttı, 5 milyon ton hasat. Modern sulama sistemleri kullanıldı.", icerik_en: "Production increased 30%, 5 million tons harvested. Modern irrigation systems used." },
-            { tr: "Türk takımı Avrupa finalinde", en: "Turkish team in European final", icerik_tr: "20 yıl sonra finalde, Real Madrid ile karşılaşacak. 80 ülkede canlı yayın.", icerik_en: "In final after 20 years, will face Real Madrid. Live in 80 countries." },
-            { tr: "Kapadokya'ya yeni havalimanı", en: "New airport to Cappadocia", icerik_tr: "10 milyon yolcu kapasiteli, 2026'da açılıyor. Bölge turizmi canlanacak.", icerik_en: "10 million passenger capacity, opening 2026. Regional tourism will boost." },
-            { tr: "Türk dizisi Netflix'te bir numara", en: "Turkish series #1 on Netflix", icerik_tr: "80 ülkede izlenme rekoru, oyuncu Hollywood'a davet edildi.", icerik_en: "Viewing record in 80 countries, actor invited to Hollywood." },
-            { tr: "Boğaziçi'ne demiryolu köprüsü", en: "Railway bridge to Bosphorus", icerik_tr: "Avrupa-Asya 10 dakika, 2027'de tamam. İstanbul trafiği %30 azalacak.", icerik_en: "Europe-Asia in 10 minutes, completed 2027. Istanbul traffic -30%." },
-            { tr: "TOGG yılın otomobili seçildi", en: "TOGG car of the year", icerik_tr: "Avrupa'da yılın otomobili, 2026'da ihracat başlıyor. Gurur verici başarı.", icerik_en: "Car of the year in Europe, exports start 2026. Proud achievement." },
-            { tr: "Pamukkale'de koruma çalışmaları", en: "Protection works in Pamukkale", icerik_tr: "Travertenler korunuyor, ziyaretçi sınırlaması getirildi. UNESCO mirası.", icerik_en: "Travertines protected, visitor limitation. UNESCO heritage." },
-            { tr: "Milli yüzücüden olimpiyat rekoru", en: "Olympic record from national swimmer", icerik_tr: "400 metre serbest altın madalya, dünya rekoru kırıldı.", icerik_en: "400m freestyle gold medal, world record broken." },
-            { tr: "Türkiye'de kitap okuma arttı", en: "Reading increased in Turkey", icerik_tr: "Gençlerde %40 artış, yeni kütüphaneler açılıyor. En çok roman okunuyor.", icerik_en: "40% increase among youth, new libraries opening. Most novels read." },
-            { tr: "Türk mutfağı UNESCO'da", en: "Turkish cuisine in UNESCO", icerik_tr: "Kebap, baklava, döner tescillendi. Dünyaca ünlü şefler Türkiye'de.", icerik_en: "Kebab, baklava, döner registered. World-famous chefs in Turkey." },
-            { tr: "Çanakkale Köprüsü'nde rekor", en: "Record on Çanakkale Bridge", icerik_tr: "100 milyonuncu araç geçti, dünyanın en uzun asma köprüsü.", icerik_en: "100 millionth vehicle passed, world's longest suspension bridge." },
-            { tr: "Türk halıları dünyada", en: "Turkish carpets worldwide", icerik_tr: "Hereke ve Isparta halıları 500 milyon dolar ihracat. ABD ve Almanya'ya.", icerik_en: "Hereke and Isparta carpets $500M exports. To USA and Germany." },
-            { tr: "Güneş enerjisinde patlama", en: "Solar energy boom", icerik_tr: "5 yılda 10 kat artış, Avrupa'da ilk 3'teyiz. 50 bin kişiye istihdam.", icerik_en: "10x increase in 5 years, top 3 in Europe. 50K jobs." },
-            { tr: "Türk sanatçı Grammy kazandı", en: "Turkish artist wins Grammy", icerik_tr: "Geleneksel müzik dalında ödül. Türk müziği dünyada tanıtıldı.", icerik_en: "Award in traditional music category. Turkish music introduced to world." },
-            { tr: "SpaceX'e Türk uydusu", en: "Turkish satellite to SpaceX", icerik_tr: "İlk Türk uydusu SpaceX ile uzaya gönderilecek. İletişimde devrim.", icerik_en: "First Turkish satellite to launch with SpaceX. Revolution in communication." },
-            { tr: "Sıfır Atık'a BM ödülü", en: "UN award to Zero Waste", icerik_tr: "Emine Erdoğan öncülüğünde, 30 ülke projeyi uyguluyor.", icerik_en: "Led by Emine Erdoğan, 30 countries implementing." },
-            { tr: "Türk okçular dünya şampiyonu", en: "Turkish archers world champions", icerik_tr: "Geleneksel okçulukta 15 madalya, Sultanahmet'te kutlama.", icerik_en: "15 medals in traditional archery, celebration in Sultanahmet." },
-            { tr: "Türk kahvesi tescillendi", en: "Turkish coffee registered", icerik_tr: "AB'den coğrafi işaret, sadece Türkiye'de üretilen kahveler bu ismi taşıyacak.", icerik_en: "Geographical indication from EU, only Turkish coffee can use this name." },
-            { tr: "Ankara'da dev müze açıldı", en: "Giant museum opened in Ankara", icerik_tr: "100 bin m²'de 10 bin yıllık eserler. İlk gün 50 bin ziyaretçi.", icerik_en: "10,000-year-old artifacts on 100,000 m². 50K visitors first day." },
-            { tr: "Paris Moda Haftası'nda Türkler", en: "Turks at Paris Fashion Week", icerik_tr: "Türk tasarımcılar büyük beğeni topladı. Ünlü modacılar ilgi gösterdi.", icerik_en: "Turkish designers received great acclaim. Famous fashion designers showed interest." },
-            { tr: "Türk bilim insanı Nobel aldı", en: "Turkish scientist gets Nobel", icerik_tr: "Prof. Dr. Ahmet Yılmaz Nobel Fizik Ödülü'nü kazandı. Kuantum fiziği çalışmaları.", icerik_en: "Prof. Dr. Ahmet Yılmaz won Nobel Prize in Physics. Quantum physics studies." },
-            { tr: "Ankara-İzmir hızlı tren başlıyor", en: "Ankara-İzmir high-speed rail starts", icerik_tr: "Seyahat süresi 3.5 saat, 2027'de tamam. 10 milyar lira yatırım.", icerik_en: "Travel time 3.5 hours, completed 2027. 10 billion lira investment." },
-            { tr: "Filenin Sultanları olimpiyat şampiyonu", en: "Sultans of the Net Olympic champions", icerik_tr: "Brezilya'yı yenerek altın madalya kazandılar. Tarihi başarı.", icerik_en: "Beat Brazil for gold medal. Historic success." },
-            { tr: "Akkuyu NGS açıldı", en: "Akkuyu NPP opened", icerik_tr: "4 reaktör, Türkiye'nin enerji ihtiyacının %10'unu karşılayacak.", icerik_en: "4 reactors, will meet 10% of Turkey's energy needs." },
-            { tr: "Safranbolu evleri UNESCO mirası", en: "Safranbolu houses UNESCO heritage", icerik_tr: "Tarihi evler koruma altında, restorasyon çalışmaları başladı.", icerik_en: "Historic houses protected, restoration works started." },
-            { tr: "Nadir hastalığa Türk çözümü", en: "Turkish cure for rare disease", icerik_tr: "Dünyada 100 kişide görülen genetik hastalığa çare bulundu. Tıp tarihinde bir ilk.", icerik_en: "Cure found for genetic disease seen in 100 people worldwide. First in medical history." }
-        ];
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
 
-        // ========== GAZETE SAYFALARI ==========
-        const pages = [];
-        pages.push({ page: 1, kapak: true });
-        
-        for (let p = 2; p <= 16; p++) {
-            let haberlerSayfa = [];
-            let index = (p - 2) * 2;
-            haberlerSayfa.push(haberler[index]);
-            haberlerSayfa.push(haberler[index + 1]);
-            pages.push({ page: p, kapak: false, son: false, haberler: haberlerSayfa });
-        }
-        pages.push({ page: 17, kapak: false, son: true });
-
-        // ========== EKRAN GEÇİŞ ==========
-        window.showNewsScreen = function() {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('newsScreen').classList.add('active');
-            if (animId) {
-                cancelAnimationFrame(animId);
-                animId = null;
-            }
-            gameActive = false;
-            document.getElementById('questionModal').classList.remove('active');
-        };
-
-        window.showMathScreen = function() {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('mathScreen').classList.add('active');
-            baslatOyun();
-        };
-
-        // ========== FLAPPY BIRD ==========
-        function baslatOyun() {
-            bird = { 
-                x: window.innerWidth * 0.2, 
-                y: window.innerHeight / 2, 
-                w: window.innerHeight * 0.06, 
-                h: window.innerHeight * 0.045, 
-                g: 0.25, 
-                z: -7, 
-                hiz: 0 
-            };
-            pipes = [];
-            frame = 0;
-            score = 0;
-            gameOver = false;
-            showingQuestion = false;
-            gameActive = true;
-            usedQuestions = [];
-            document.getElementById('mathScore').textContent = '0';
-            document.getElementById('questionModal').classList.remove('active');
-            
-            if (animId) cancelAnimationFrame(animId);
-            oyunDongusu();
-        }
-
-        function oyunDongusu() {
-            if (!gameActive) return;
-            if (!gameOver && !showingQuestion) {
-                fizikGuncelle();
-            }
-            cizimYap();
-            animId = requestAnimationFrame(oyunDongusu);
-        }
-
-        function fizikGuncelle() {
-            bird.hiz += bird.g;
-            bird.y += bird.hiz;
-            
-            if (frame % 80 === 0) {
-                let bosluk = window.innerHeight * 0.3;
-                let ustYuksek = Math.random() * (window.innerHeight * 0.5) + 50;
-                pipes.push({ 
-                    x: window.innerWidth, 
-                    ust: ustYuksek, 
-                    alt: ustYuksek + bosluk, 
-                    genislik: window.innerWidth * 0.05, 
-                    gecti: false 
-                });
-            }
-            
-            for (let i = pipes.length - 1; i >= 0; i--) {
-                pipes[i].x -= 6;
-                if (!pipes[i].gecti && pipes[i].x + pipes[i].genislik < bird.x) {
-                    pipes[i].gecti = true;
-                    score++;
-                    document.getElementById('mathScore').textContent = score;
-                }
-                if (pipes[i].x + pipes[i].genislik < 0) pipes.splice(i, 1);
-            }
-            
-            for (let p of pipes) {
-                if (bird.x < p.x + p.genislik && bird.x + bird.w > p.x) {
-                    if (bird.y < p.ust || bird.y + bird.h > p.alt) {
-                        gameOver = true;
-                        soruGoster();
-                        return;
-                    }
-                }
-            }
-            
-            if (bird.y + bird.h > window.innerHeight || bird.y < 0) {
-                gameOver = true;
-                soruGoster();
-            }
-            frame++;
-        }
-
-        function cizimYap() {
-            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-            ctx.fillStyle = '#4ec0ca';
-            ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-            
-            ctx.fillStyle = '#228B22';
-            pipes.forEach(p => {
-                ctx.fillRect(p.x, 0, p.genislik, p.ust);
-                ctx.fillRect(p.x, p.alt, p.genislik, window.innerHeight - p.alt);
-            });
-            
-            ctx.fillStyle = '#FFD700';
-            ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
-            ctx.fillStyle = 'black';
-            ctx.fillRect(bird.x + bird.w * 0.6, bird.y + bird.h * 0.2, bird.w * 0.15, bird.h * 0.15);
-            
-            ctx.fillStyle = 'white';
-            ctx.font = `bold ${window.innerHeight * 0.06}px Arial`;
-            ctx.fillText(score, window.innerWidth / 2, window.innerHeight * 0.1);
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && gameActive && !gameOver && !showingQuestion) {
-                e.preventDefault();
-                bird.hiz = bird.z;
-            }
-        });
-
-        canvas.addEventListener('click', () => {
-            if (gameActive && !gameOver && !showingQuestion) bird.hiz = bird.z;
-        });
-
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (gameActive && !gameOver && !showingQuestion) bird.hiz = bird.z;
-        });
-
-        // ========== SORULAR ==========
-        function soruGoster() {
-            if (showingQuestion) return;
-            
-            let availableQuestions = questions.filter((q, index) => !usedQuestions.includes(index));
-            if (availableQuestions.length === 0) {
-                usedQuestions = [];
-                availableQuestions = questions;
-            }
-            
-            const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-            const questionIndex = questions.findIndex(q => q === availableQuestions[randomIndex]);
-            usedQuestions.push(questionIndex);
-            currentQ = availableQuestions[randomIndex];
-            
-            showingQuestion = true;
-            gameActive = false;
-            
-            document.getElementById('questionDisplay').innerHTML = '❓ ' + currentQ.q;
-            document.getElementById('answerInput').value = '';
-            document.getElementById('mathFeedback').innerHTML = '';
-            document.getElementById('mathExplanation').style.display = 'none';
-            document.getElementById('questionModal').classList.add('active');
-        }
-
-        window.checkAnswer = function() {
-            const cevap = parseFloat(document.getElementById('answerInput').value);
-            if (Math.abs(cevap - currentQ.a) < 0.1) {
-                document.getElementById('mathFeedback').innerHTML = '✅ AFERİN! DOĞRU!';
-                document.getElementById('mathFeedback').className = 'feedback-box feedback-success';
-                
-                setTimeout(() => {
-                    document.getElementById('questionModal').classList.remove('active');
-                    gameOver = false;
-                    showingQuestion = false;
-                    bird.y = window.innerHeight / 2;
-                    bird.hiz = 0;
-                    pipes = [];
-                    frame = 0;
-                    gameActive = true;
-                }, 1000);
-            } else {
-                document.getElementById('mathFeedback').innerHTML = '❌ YANLIŞ! BİR DAHAKİ SEFERE!';
-                document.getElementById('mathFeedback').className = 'feedback-box feedback-error';
-            }
-        };
-
-        window.showSolution = function() {
-            document.getElementById('mathExplanation').innerHTML = '📝 ÇÖZÜM:<br>' + currentQ.c;
-            document.getElementById('mathExplanation').style.display = 'block';
-        };
-
-        // ========== GAZETE ==========
-        function gosterGazete() {
-            const sayfa = pages[currentPage - 1];
-            let html = '';
-            
-            if (sayfa.kapak) {
-                html = `<div class="cover-page">
-                    <div class="cover-gif"><img src="assets/ataturk.gif" alt="Atatürk"></div>
-                    <div class="cover-gif"><img src="assets/turk_bayragi.gif" alt="Bayrak"></div>
-                    <div class="cover-title">THE NEWS</div>
-                </div>`;
-            } else if (sayfa.son) {
-                html = `<div class="last-page">
-                    <img src="assets/88.jpg" alt="88">
-                    <div class="last-message">ÖĞRETMENİM<br>100 VERİR MİSİNİZ?</div>
-                </div>`;
-            } else {
-                html = '<div class="news-grid">';
-                sayfa.haberler.forEach(h => {
-                    html += `<div class="news-card">
-                        <div class="news-meta">TÜRKİYE • SAYFA ${currentPage}</div>
-                        <div class="news-title">${currentLang === 'tr' ? h.tr : h.en}</div>
-                        <div class="news-image"><img src="assets/${h.resim}" alt="Haber"></div>
-                        <div class="news-text">${currentLang === 'tr' ? h.icerik_tr : h.icerik_en}</div>
-                    </div>`;
-                });
-                html += '</div>';
-            }
-            
-            document.getElementById('newsContent').innerHTML = html;
-            document.getElementById('newsPageInfo').innerHTML = `${currentPage}/${totalPages}`;
-            document.getElementById('prevNewsBtn').disabled = currentPage === 1;
-            document.getElementById('nextNewsBtn').disabled = currentPage === totalPages;
-        }
-
-        window.changePage = function(yon) {
-            currentPage += yon;
-            gosterGazete();
-        };
-
-        window.setLanguage = function(dil) {
-            currentLang = dil;
-            gosterGazete();
-        };
-
-        window.showCredits = function() {
-            document.getElementById('creditsModal').classList.add('active');
-            document.getElementById('modalOverlay').classList.add('active');
-        };
-
-        window.hideCredits = function() {
-            document.getElementById('creditsModal').classList.remove('active');
-            document.getElementById('modalOverlay').classList.remove('active');
-        };
-
-        const muzik = document.getElementById('bgMusic');
-        window.toggleMusic = function() {
-            if (isMusicOn) { muzik.pause(); document.getElementById('musicBtn').textContent = '🔈'; } 
-            else { muzik.play(); document.getElementById('musicBtn').textContent = '🔊'; }
-            isMusicOn = !isMusicOn;
-        };
-
-        window.addEventListener('load', () => {
-            muzik.play().catch(() => {});
-            gosterGazete();
-        });
-    </script>
+</script>
 </body>
 </html>
