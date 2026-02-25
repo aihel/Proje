@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Math proje man (By OmerAsaf)BaliCekerkenOynamayın</title>
+<title>Math(Meth) Project (By OmerAsaf</title>
 <style>
 body{
     margin:0;
@@ -74,13 +74,14 @@ canvas{
     display:flex;
     justify-content:center;
     align-items:center;
-    pointer-events:none;
+    pointer-events:auto;
     z-index:1;
 }
 
 #messageImg{
     width:400px;
     height:200px;
+    cursor:pointer;
 }
 
 /* Info panel */
@@ -196,9 +197,9 @@ for(let i=1;i<=90;i++){
 }
 
 /* ================= GAME VARIABLES ================= */
-let bird = {x:150,y:350,vy:0,frame:0}; // biraz yukardan başlasın
+let bird = {x:150,y:350,vy:0,frame:0};
 let pipes = [];
-let state = "menu"; // menu, question, play, gameover
+let state = "menu";
 let score = 0;
 let currentQuestion = null;
 
@@ -273,8 +274,12 @@ function startGame(){
 /* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="play"){
-        bird.vy=-6; // biraz daha yumuşak zıplama
+        bird.vy=-6;
     }
+});
+
+messageImg.addEventListener("click",()=>{ // Menüde tıklayınca oyun başlar
+    startGame();
 });
 
 infoBtn.addEventListener("click",(e)=>{
