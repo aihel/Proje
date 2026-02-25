@@ -39,7 +39,7 @@ button.option{
     cursor:pointer;
     display:block;
     margin:5px 0;
-    width:200px;
+    width:220px;
     font-size:1.2em;
 }
 </style>
@@ -56,159 +56,94 @@ button.option{
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-/* ================= IMAGE LOADER ================= */
-function load(name){
-    const img = new Image();
-    img.src = "sprites/" + name;
-    return img;
-}
-
-// Arkaplan ve base
+/* =============== IMAGES =============== */
+function load(name){ const img=new Image(); img.src="sprites/"+name; return img; }
 const bg = load("background-day.png");
 const baseImg = load("base.png");
-
-// Pipes
 const pipeImg = load("pipe-green.png");
-
-// Bird
-const birdFrames = [
-    load("yellowbird-upflap.png"),
-    load("yellowbird-midflap.png"),
-    load("yellowbird-downflap.png")
-];
-
-// Menü ve gameover
+const birdFrames = [load("yellowbird-upflap.png"),load("yellowbird-midflap.png"),load("yellowbird-downflap.png")];
 const messageImg = load("message.png");
 const gameoverImg = load("gameover.png");
 
-/* ================= SCORE SPRITES ================= */
-const scoreSprites = {
-    "0": load("00000.png"),
-    "1": load("111.png"),
-    "2": load("99999.png"),
-    "3": load("33.png"),
-    "4": load("44.png"),
-    "5": load("55.png"),
-    "6": load("66.png"),
-    "7": load("77.png"),
-    "8": load("88.png"),
-    "9": load("99.png")
-};
+const scoreSprites = {"0":load("00000.png"),"1":load("111.png"),"2":load("99999.png"),"3":load("33.png"),"4":load("44.png"),"5":load("55.png"),"6":load("66.png"),"7":load("77.png"),"8":load("88.png"),"9":load("99.png")};
 
-/* ================= QUESTIONS (90) ================= */
+/* =============== QUESTIONS =============== */
 const questions=[];
 for(let i=1;i<=90;i++){
-    let a = Math.floor(Math.random()*8)+2;
-    let b = Math.floor(Math.random()*9)+1;
+    let a=Math.floor(Math.random()*8)+2;
+    let b=Math.floor(Math.random()*9)+1;
     questions.push({
-        q: `${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
-        ans: b.toString(),
-        sol: `İşçi sayısı artarsa süre azalır (ters orantı). Cevap: ${b}`
+        q:`${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
+        ans:b.toString(),
+        sol:`İşçi sayısı artarsa süre azalır (ters orantı). Cevap: ${b}`
     });
 }
-let askedQuestions = new Set();
-let currentQuestion = null;
-
-/* ================= GAME VARIABLES ================= */
-let bird = {x:100,y:300,vy:0,frame:0};
-let pipes = [];
-let state="menu";
-let score=0;
+let askedQuestions=new Set();
+let currentQuestion=null;
 let awaitingQuestion=false;
 
-/* ================= AUDIO ================= */
-const bgm = new Audio("88.m4a");
-bgm.loop=true;
+/* =============== GAME VARIABLES =============== */
+let bird={x:100,y:300,vy:0,frame:0};
+let pipes=[];
+let state="menu";
+let score=0;
+const bgm = new Audio("88.m4a"); bgm.loop=true;
 
-/* ================= INPUT ================= */
+/* =============== INPUT =============== */
 canvas.addEventListener("click",()=>{
     if(state==="menu"){
-        resetGame();
-        state="play";
-        bird.vy=-6.3;
-        bgm.play();
-        return;
+        resetGame(); state="play"; bird.vy=-6; bgm.play(); return;
     }
-    if(state==="play"){
-        bird.vy=-6.3;
-    }
+    if(state==="play"){ bird.vy=-6; }
 });
 
-/* ================= GAME FUNCTIONS ================= */
-function resetGame(){
-    pipes=[];
-    bird.y=300;
-    bird.vy=0;
-    score=0;
-}
-
-// Spawn pipe
-function spawnPipe(){
-    if(state!=="play") return;
-    let top = Math.random()*250+50;
-    pipes.push({x:canvas.width, top:top, passed:false});
-}
-
+/* =============== FUNCTIONS =============== */
+function resetGame(){ pipes=[]; bird.y=300; bird.vy=0; score=0; }
+function spawnPipe(){ if(state!=="play") return; let top=Math.random()*250+50; pipes.push({x:canvas.width,top:top,passed:false}); }
 setInterval(spawnPipe,2000);
 
-// Ask question with options
 function askQuestion(){
-    if(awaitingQuestion) return; 
+    if(awaitingQuestion) return;
     awaitingQuestion=true;
-    let available = questions.filter((q,i)=>!askedQuestions.has(i));
-    if(available.length===0){
-        state="menu";
-        awaitingQuestion=false;
-        return;
-    }
-    let index = Math.floor(Math.random()*available.length);
-    currentQuestion = available[index];
+    let available=questions.filter((q,i)=>!askedQuestions.has(i));
+    if(available.length===0){ state="menu"; awaitingQuestion=false; return; }
+    let index=Math.floor(Math.random()*available.length);
+    currentQuestion=available[index];
     askedQuestions.add(questions.indexOf(currentQuestion));
 
-    document.getElementById("questionText").innerText = currentQuestion.q;
-    const opts = document.getElementById("options");
+    document.getElementById("questionText").innerText=currentQuestion.q;
+    const opts=document.getElementById("options");
     opts.innerHTML="";
-
-    // Şıklar: doğru cevabı rastgele konumlandır
-    const correct = parseInt(currentQuestion.ans);
-    let choices = [correct-1, correct, correct+1, correct+2];
-    choices = choices.map(String);
-
+    const correct=parseInt(currentQuestion.ans);
+    let choices=[correct-1,correct,correct+1,correct+2].map(String);
     for(let c of choices){
-        let btn = document.createElement("button");
-        btn.className="option";
-        btn.innerText=c;
+        let btn=document.createElement("button");
+        btn.className="option"; btn.innerText=c;
         btn.onclick=()=>checkAnswerBtn(c);
         opts.appendChild(btn);
     }
-
     document.getElementById("solution").innerText="";
     document.getElementById("questionBox").style.display="flex";
 }
 
-// Check option
 function checkAnswerBtn(val){
     if(val==currentQuestion.ans){
         document.getElementById("questionBox").style.display="none";
-        resetGame();
-        state="menu";
-        awaitingQuestion=false;
+        resetGame(); state="menu"; awaitingQuestion=false;
     }else{
         document.getElementById("solution").innerText="Yanlış! "+currentQuestion.sol;
     }
 }
 
-/* ================= UPDATE ================= */
+/* =============== UPDATE =============== */
 function update(){
     if(state!=="play") return;
+    bird.vy+=0.35; bird.y+=bird.vy; bird.frame+=0.2;
 
-    bird.vy+=0.35; 
-    bird.y+=bird.vy;
-    bird.frame+=0.2;
-
-    for(let i=pipes.length-1;i>=0;i--){
-        let p=pipes[i];
-        p.x-=4.32; 
+    let pipesCopy=[...pipes];
+    for(let i=0;i<pipesCopy.length;i++){
+        let p=pipesCopy[i];
+        p.x-=4; 
 
         const hitW=pipeImg.width*0.8;
         const hitHTop=pipeImg.height*0.8;
@@ -217,76 +152,46 @@ function update(){
         const hitTop = bird.x+50>p.x && bird.x<p.x+hitW && bird.y<p.top;
         const hitBottom = bird.x+50>p.x && bird.x<p.x+hitW && bird.y+40>p.top+140;
 
-        if(hitTop||hitBottom){
-            console.log("Hit!",p.x,bird.y);
-            state="gameover";
-            setTimeout(()=>askQuestion(),500);
-        }
+        if(hitTop||hitBottom){ state="gameover"; setTimeout(()=>askQuestion(),500); }
 
-        if(!p.passed && p.x+60<bird.x){
-            score++;
-            p.passed=true;
-        }
+        if(!p.passed && p.x+60<bird.x){ score++; p.passed=true; }
 
-        if(p.x + 60 < 0){
-            pipes.splice(i,1);
-        }
+        if(p.x + 60 < 0){ pipes.splice(pipes.indexOf(p),1); }
     }
 
-    if(bird.y>canvas.height-50 || bird.y<0){
-        state="gameover";
-        setTimeout(()=>askQuestion(),500);
-    }
+    if(bird.y>canvas.height-50 || bird.y<0){ state="gameover"; setTimeout(()=>askQuestion(),500); }
 }
 
-/* ================= DRAW ================= */
+/* =============== DRAW =============== */
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
-    // Pipes
     pipes.forEach(p=>{
         ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
         ctx.drawImage(pipeImg,p.x,p.top+140,60,320);
     });
 
-    // Bird
     if(state!=="menu"){
-        ctx.drawImage(
-            birdFrames[Math.floor(bird.frame)%3],
-            bird.x,bird.y,50,40
-        );
+        ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,50,40);
     }
 
-    // Base
     ctx.drawImage(baseImg,0,canvas.height-50,canvas.width,50);
 
-    // Menü
-    if(state==="menu"){
-        ctx.drawImage(messageImg,canvas.width/2-110,canvas.height/2-60,220,120);
-    }
-
-    // Gameover
-    if(state==="gameover"){
-        ctx.drawImage(gameoverImg,canvas.width/2-120,canvas.height/2-60,240,120);
-    }
+    if(state==="menu"){ ctx.drawImage(messageImg,canvas.width/2-110,canvas.height/2-60,220,120); }
+    if(state==="gameover"){ ctx.drawImage(gameoverImg,canvas.width/2-120,canvas.height/2-60,240,120); }
 
     // Score
-    let s = score.toString();
-    let offset = 0;
+    let s=score.toString(); let offset=0;
     for(let i=0;i<s.length;i++){
-        let digit = s[i];
+        let digit=s[i];
         ctx.drawImage(scoreSprites[digit],canvas.width/2-((s.length*30)/2)+offset,20,30,50);
         offset+=30;
     }
 }
 
-/* ================= LOOP ================= */
-function loop(){
-    update();
-    draw();
-    requestAnimationFrame(loop);
-}
+/* =============== LOOP =============== */
+function loop(){ update(); draw(); requestAnimationFrame(loop); }
 loop();
 </script>
 </body>
