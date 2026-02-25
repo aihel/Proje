@@ -2,169 +2,143 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-<title>Matematik proje(By Omer Asaf)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE NEWS + FLAPPY BIRD (By Omer Asaf)</title>
 <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif;}
-    html,body{width:100%;height:100%;overflow:hidden;background:#000;}
-    #app{width:100vw;height:100vh;position:relative;}
-
-    /* GİRİŞ */
-    #splash{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;z-index:10000;flex-direction:column;color:white;}
-    #splash h1{font-size:5em;text-align:center;}
-    #splash button{margin-top:50px;font-size:2em;padding:20px 50px;border:none;border-radius:20px;background:#FFD700;color:#000;cursor:pointer;}
-
-    /* SIDE BAR */
-    .side-bar{position:fixed;top:0;left:-320px;width:300px;height:100vh;background:#111;border-right:2px solid #333;transition:left 0.4s;z-index:1000;padding:100px 20px 20px;box-shadow:5px 0 30px rgba(0,0,0,0.5);}
-    .side-bar.open{left:0;}
-    .menu-btn{position:fixed;top:20px;left:20px;width:60px;height:60px;background:#111;border:2px solid #333;border-radius:10px;cursor:pointer;z-index:1001;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;}
-    .menu-btn span{width:35px;height:4px;background:white;transition:all 0.3s;}
-    .menu-btn.open span:nth-child(1){transform:rotate(45deg) translate(8px,8px);}
-    .menu-btn.open span:nth-child(2){opacity:0;}
-    .menu-btn.open span:nth-child(3){transform:rotate(-45deg) translate(8px,-8px);}
-    .side-bar-item{width:100%;padding:25px;margin:15px 0;background:#1a1a1a;border:1px solid #333;color:white;font-size:1.8em;cursor:pointer;transition:all 0.3s;text-align:center;border-left:5px solid transparent;}
-    .side-bar-item:hover{background:#222;border-left-color:#ffd700;transform:translateX(5px);}
-    .side-bar-item.math{border-left-color:#3498db;}
-    .side-bar-item.news{border-left-color:#e74c3c;}
-    .credits-side{position:absolute;bottom:30px;left:20px;right:20px;padding:20px;background:#1a1a1a;border:1px solid #333;color:#888;text-align:center;cursor:pointer;transition:all 0.3s;font-size:1.3em;}
-    .credits-side:hover{color:white;border-color:#666;}
-
-    .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;z-index:999;backdrop-filter:blur(5px);}
-    .overlay.active{display:block;}
-
-    /* SCREEN */
-    .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;background:#000;color:white;}
-    .screen.active{display:block;}
-
-    /* NEWS SCREEN */
-    #newsScreen{overflow-y:auto;}
-    .news-header{background:#111;padding:20px;text-align:center;border-bottom:2px solid #333;position:relative;}
-    .news-header h1{font-size:4em;font-family:'Times New Roman',serif;color:white;}
-    .lang-switch{position:absolute;top:25px;right:20px;display:flex;gap:10px;}
-    .lang-switch button{width:60px;height:45px;background:#222;color:white;border:1px solid #444;cursor:pointer;font-size:1.2em;}
-    .lang-switch button:hover{background:#333;border-color:#666;}
-    .news-content{padding:30px;margin-left:70px;}
-    .news-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;}
-    .news-card{background:#111;padding:25px;border:1px solid #333;transition:all 0.3s;}
-    .news-card:hover{border-color:#666;transform:translateX(5px);}
-    .news-meta{color:#888;font-size:1em;margin-bottom:10px;text-transform:uppercase;}
-    .news-title{font-size:2em;color:white;margin-bottom:15px;}
-    .news-image{width:100%;height:200px;background:#222;margin:15px 0;border:2px solid #333;overflow:hidden;}
-    .news-image img{width:100%;height:100%;object-fit:cover;filter:grayscale(100%);}
-    .news-text{color:#ccc;line-height:1.8;font-size:1.1em;}
-    .pagination{display:flex;justify-content:center;gap:30px;padding:20px;background:#111;border-top:2px solid #333;margin-left:70px;}
-    .page-btn{padding:15px 40px;background:#222;color:white;border:1px solid #444;cursor:pointer;font-size:1.2em;}
-    .page-btn:hover:not(:disabled){background:#333;border-color:#666;}
-    .page-btn:disabled{opacity:0.3;cursor:not-allowed;}
-    .page-info{color:white;font-size:1.4em;}
-
-    /* MATH SCREEN */
-    #mathScreen{background:#1a2634;position:relative;}
-    .math-header{position:absolute;top:0;left:0;right:0;background:rgba(22,33,62,0.9);padding:15px 20px 15px 100px;display:flex;justify-content:space-between;align-items:center;color:white;z-index:10;backdrop-filter:blur(5px);border-bottom:2px solid #ffd700;}
-    .math-header button{background:#ffd700;border:none;padding:12px 30px;border-radius:5px;font-weight:bold;cursor:pointer;font-size:1.2em;}
-    .game-score{font-size:3em;font-weight:bold;color:#ffd700;text-shadow:2px 2px 0 #000;}
-    .game-container{width:100vw;height:100vh;background:#4ec0ca;position:relative;overflow:hidden;}
-    #mathCanvas{width:100%;height:100%;display:block;background:#4ec0ca;}
-
-    /* SORU MODAL */
-    .question-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;z-index:1000;backdrop-filter:blur(10px);}
-    .question-modal.active{display:flex;}
-    .question-box{background:#16213e;padding:50px;border-radius:40px;max-width:600px;width:80%;border:5px solid #ffd700;box-shadow:0 30px 60px rgba(0,0,0,0.5);}
-    .question-text{color:white;font-size:2em;line-height:1.6;margin-bottom:20px;text-align:center;font-weight:bold;}
-    .answer-area{display:flex;flex-direction:column;gap:15px;}
-    .math-input{padding:15px;font-size:1.6em;border:4px solid #ffd700;border-radius:20px;background:#1a1a2e;color:white;text-align:center;width:100%;}
-    .math-buttons{display:flex;gap:15px;}
-    .math-btn{flex:1;padding:15px;border:none;border-radius:20px;font-weight:bold;cursor:pointer;font-size:1.4em;transition:all 0.3s;}
-    .submit-btn{background:#27ae60;color:white;}
-    .solve-btn{background:#f39c12;color:white;}
-    .feedback-box{padding:15px;border-radius:20px;text-align:center;font-weight:bold;font-size:1.4em;}
-    .feedback-success{background:#27ae60;color:white;animation:pulse 0.5s;}
-    .feedback-error{background:#e74c3c;color:white;animation:shake 0.5s;}
-    @keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
-    @keyframes shake{0%{transform:translateX(0);}25%{transform:translateX(-10px);}50%{translateX(10px);}75%{translateX(-5px);}100%{translateX(0);}}
-
-    /* MODAL */
-    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2000;}
-    .modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;padding:40px;border:3px solid #333;z-index:2001;width:90%;max-width:500px;color:white;}
-    .modal.active,.modal-overlay.active{display:block;}
-    .modal h2{text-align:center;font-size:2.5em;margin-bottom:40px;color:white;}
-    .credit-item{background:#1a1a1a;padding:20px;margin-bottom:20px;border-left:8px solid #666;}
-    .credit-name{font-weight:bold;color:white;font-size:1.8em;margin-bottom:8px;}
-    .credit-role{color:#888;font-size:1.2em;}
-    .close-modal{background:#222;color:white;padding:15px;border:1px solid #444;width:100%;cursor:pointer;margin-top:30px;font-size:1.3em;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;}
+canvas{display:block;margin:0 auto;background:#87CEEB;} /* Gökyüzü */
+#splash{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;flex-direction:column;background:#000;color:white;font-size:4em;animation:fadeInOut 3s forwards;z-index:1000;}
+@keyframes fadeInOut{0%{opacity:0;transform:scale(0.5);}50%{opacity:1;transform:scale(1.1);}100%{opacity:0;transform:scale(1);}}
+#scoreDisplay{position:absolute;top:10px;right:20px;color:white;font-size:2em;z-index:1001;}
+#mathQuestion{position:absolute;top:10%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:15px;display:none;max-width:80%;text-align:center;font-size:1.8em;z-index:1002;}
+#answerInput{margin-top:10px;font-size:1.5em;padding:8px;border-radius:10px;border:none;}
+#feedback{margin-top:10px;font-size:1.4em;color:yellow;}
 </style>
 </head>
 <body>
-<!-- SPLASH -->
-<div id="splash">
-    <h1>By Omer Asaf</h1>
-    <button onclick="startApp()">BAŞLA</button>
+
+<div id="splash">By Omer Asaf</div>
+
+<div id="scoreDisplay">Score: 0</div>
+<div id="mathQuestion">
+    <div id="questionText"></div>
+    <input type="number" id="answerInput" placeholder="Cevabı gir"/>
+    <div id="feedback"></div>
 </div>
 
-<!-- MENÜ -->
-<div class="menu-btn" id="menuBtn" onclick="toggleSideBar()"><span></span><span></span><span></span></div>
-<div class="side-bar" id="sideBar">
-    <div class="side-bar-item news" onclick="showNewsScreen(); toggleSideBar();">📰 THE NEWS</div>
-    <div class="side-bar-item math" onclick="showMathScreen(); toggleSideBar();">📐 MATEMATİK</div>
-    <div class="credits-side" onclick="showCredits(); toggleSideBar();">👥 EMEĞİ GEÇENLER</div>
-</div>
-<div class="overlay" id="overlay" onclick="toggleSideBar()"></div>
-
-<div id="app">
-    <!-- NEWS -->
-    <div id="newsScreen" class="screen">
-        <div class="news-header">
-            <h1>THE NEWS</h1>
-        </div>
-        <div class="news-content" id="newsContent"></div>
-        <div class="pagination">
-            <button class="page-btn" id="prevNewsBtn" onclick="changePage(-1)">← ÖNCEKİ</button>
-            <span class="page-info" id="newsPageInfo">1/17</span>
-            <button class="page-btn" id="nextNewsBtn" onclick="changePage(1)">SONRAKİ →</button>
-        </div>
-    </div>
-
-    <!-- MATEMATİK / FLAPPY -->
-    <div id="mathScreen" class="screen">
-        <div class="math-header">
-            <button onclick="showNewsScreen()">← GAZETE</button>
-            <span class="game-score" id="mathScore">0</span>
-        </div>
-        <div class="game-container">
-            <canvas id="mathCanvas" width="1920" height="1080"></canvas>
-        </div>
-        <div class="question-modal" id="questionModal">
-            <div class="question-box">
-                <div class="question-text" id="questionDisplay"></div>
-                <div class="answer-area">
-                    <input type="number" id="answerInput" class="math-input" placeholder="CEVAP">
-                    <div class="math-buttons">
-                        <button class="math-btn submit-btn" onclick="checkAnswer()">CEVAPLA</button>
-                        <button class="math-btn solve-btn" onclick="showSolution()">ÇÖZÜM</button>
-                    </div>
-                    <div id="mathFeedback" class="feedback-box"></div>
-                    <div id="mathExplanation" class="explanation-box" style="display:none;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CREDIT -->
-<div class="modal-overlay" id="modalOverlay" onclick="hideCredits()"></div>
-<div class="modal" id="creditsModal">
-    <h2>🌟 EMEĞİ GEÇENLER</h2>
-    <div class="credit-item"><div class="credit-name">Ömer Asaf</div><div class="credit-role">Developer • Tasarımcı</div></div>
-    <div class="credit-item"><div class="credit-name">Necati Kaan</div><div class="credit-role">Fikir Veren • Konfor Odaklı Çözümler</div></div>
-    <div class="credit-item"><div class="credit-name">Mehmet Karagöz</div><div class="credit-role">Kod Hatalarını Bildiren • Düzelten</div></div>
-    <button class="close-modal" onclick="hideCredits()">KAPAT</button>
-</div>
-
-<!-- MÜZİK -->
-<audio id="bgMusic" loop autoplay><source src="assets/88.m4a" type="audio/mp4"></audio>
+<audio id="bgMusic" src="assets/88.m4a" loop autoplay></audio>
+<canvas id="gameCanvas"></canvas>
 
 <script>
-// BURAYA FLAPPY + MATEMATİK + NEWS + MENU + SORU JS KODUNU TAMAMINI EKLEMEK GEREK
+// --- SPLASH ---
+setTimeout(() => { document.getElementById('splash').style.display='none'; startGame(); }, 3000);
+
+// --- FLAPPY BIRD AYARLARI ---
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let bird={x:150,y:canvas.height/2,width:40,height:40,dy:0};
+const gravity=0.7;
+const jump=-12;
+let pipes=[],pipeWidth=80,pipeGap=200,frame=0,score=0;
+let gameOver=false;
+
+// --- MATEMATİK SORULARI ---
+let mathQuestions=[];
+for(let i=1;i<=90;i++){
+    let a=Math.floor(Math.random()*20)+1;
+    let b=Math.floor(Math.random()*20)+1;
+    let op=['+','-','*'][Math.floor(Math.random()*3)];
+    let q=`${a} ${op} ${b}`;
+    let ans=eval(q);
+    mathQuestions.push({q:q,ans:ans});
+}
+let currentQuestion=0;
+
+// --- GAME FUNCTIONS ---
+function startGame(){
+    bird.y=canvas.height/2; bird.dy=0; pipes=[]; score=0; gameOver=false;
+    showMathQuestion();
+    requestAnimationFrame(gameLoop);
+}
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // --- MATEMATİK SORUSU ---
+    if(document.getElementById('mathQuestion').style.display=='block'){
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    // --- FLAPPY ---
+    bird.dy+=gravity;
+    bird.y+=bird.dy;
+    ctx.fillStyle='yellow';
+    ctx.fillRect(bird.x,bird.y,bird.width,bird.height);
+
+    // --- PIPES ---
+    if(frame%100===0){
+        let pipeY=Math.random()*(canvas.height-pipeGap-200)+100;
+        pipes.push({x:canvas.width,y:pipeY});
+    }
+    ctx.fillStyle='green';
+    for(let i=0;i<pipes.length;i++){
+        let p=pipes[i];
+        p.x-=4;
+        ctx.fillRect(p.x,0,pipeWidth,p.y);
+        ctx.fillRect(p.x,p.y+pipeGap,pipeWidth,canvas.height-p.y-pipeGap);
+
+        // çarpışma
+        if(bird.x+bird.width>p.x && bird.x< p.x+pipeWidth && (bird.y<p.y || bird.y+bird.height>p.y+pipeGap)){
+            gameOver=true;
+        }
+        if(p.x+pipeWidth<bird.x && !p.passed){score++;p.passed=true;}
+    }
+
+    // --- GAMEOVER ---
+    if(bird.y+bird.height>canvas.height || bird.y<0) gameOver=true;
+    document.getElementById('scoreDisplay').innerText='Score: '+score;
+
+    if(gameOver){ showMathQuestion(); return; }
+
+    frame++;
+    requestAnimationFrame(gameLoop);
+}
+
+// --- JUMP ---
+document.addEventListener('keydown',e=>{ if(e.code==='Space') bird.dy=jump; });
+
+// --- MATEMATİK SORUSU LOGİĞİ ---
+function showMathQuestion(){
+    if(currentQuestion>=mathQuestions.length){ currentQuestion=0; }
+    let mq=document.getElementById('mathQuestion');
+    mq.style.display='block';
+    let qobj=mathQuestions[currentQuestion];
+    document.getElementById('questionText').innerText=`Soru: ${qobj.q}`;
+    document.getElementById('answerInput').value='';
+    document.getElementById('feedback').innerText='';
+    document.getElementById('answerInput').focus();
+}
+
+document.getElementById('answerInput').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+        let ans=parseFloat(this.value);
+        let correct=mathQuestions[currentQuestion].ans;
+        let feedback=document.getElementById('feedback');
+        if(ans===correct){
+            feedback.style.color='lightgreen';
+            feedback.innerText='✅ Doğru! 3 saniye sonra oyun başlıyor';
+            setTimeout(()=>{ document.getElementById('mathQuestion').style.display='none'; currentQuestion++; startGame(); },3000);
+        } else {
+            feedback.style.color='red';
+            feedback.innerText=`❌ Yanlış! Doğru cevap: ${correct}`;
+        }
+    }
+});
 </script>
 </body>
 </html>
