@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Bird (By Omer asaf)</title>
+<title>Flappy Bird Math Edition(Sansi Asaf </title>
 <style>
 body{
     margin:0;
@@ -14,7 +14,6 @@ body{
     font-family:Arial;
     overflow:hidden;
 }
-
 canvas{
     border-radius:15px;
     box-shadow:0 0 25px rgba(255,255,255,0.15);
@@ -74,10 +73,9 @@ canvas{
     background:black;
 }
 
-#messageText{
-    color:white;
-    font-size:3em;
-    text-align:center;
+#messageImg{
+    width:300px;
+    height:150px;
 }
 </style>
 </head>
@@ -99,7 +97,7 @@ canvas{
 </div>
 
 <div id="menuBox">
-    <h1 id="messageText">By Omer Asaf</h1>
+    <img id="messageImg" src="sprites/message.png" />
 </div>
 
 <script>
@@ -110,7 +108,7 @@ const questionText = document.getElementById("questionText");
 const solutionText = document.getElementById("solution");
 const answersDiv = document.querySelector(".answers");
 const menuBox = document.getElementById("menuBox");
-const messageText = document.getElementById("messageText");
+const messageImg = document.getElementById("messageImg");
 const bgMusic = document.getElementById("bgMusic");
 
 /* ================= IMAGE LOADER ================= */
@@ -178,9 +176,7 @@ function animateMenu(){
 canvas.addEventListener("click",()=>{
     if(state==="menu"){
         menuBox.style.display="none";
-        resetGame();
-        state="play";
-        bird.vy=-6; // zıplama hafifletildi
+        askQuestion(); // Oyun başlamadan önce soru sor
         return;
     }
     if(state==="play"){
@@ -205,7 +201,7 @@ function spawnPipe(){
 /* ================= ASK QUESTION ================= */
 function askQuestion(){
     let q = questions.find(q=>!q.asked);
-    if(!q) return; 
+    if(!q) return startGame(); // Sorular biterse direkt başla
     currentQuestion = q;
     q.asked=true;
 
@@ -229,17 +225,21 @@ function askQuestion(){
 function checkAnswer(el){
     if(el.innerText === currentQuestion.ans){
         questionBox.style.display="none";
-        // Doğru cevap sonrası direkt menüye dön
-        state="menu";
-        menuBox.style.display="flex";
+        startGame();
     }else{
         solutionText.innerText = "Yanlış! " + currentQuestion.sol;
         setTimeout(()=>{
             questionBox.style.display="none";
-            state="menu";
             menuBox.style.display="flex";
+            state="menu";
         },2000);
     }
+}
+
+/* ================= START GAME ================= */
+function startGame(){
+    resetGame();
+    state="play";
 }
 
 /* ================= GAME UPDATE ================= */
@@ -256,7 +256,7 @@ function update(){
 
     pipes.forEach(p=>{
         p.x -=4;
-        if(bird.x+40>p.x && bird.x<p.x+80 && // genişlik arttı
+        if(bird.x+40>p.x && bird.x<p.x+80 &&
            (bird.y< p.top || bird.y+40>p.top+180)){
                state="gameover";
                setTimeout(askQuestion,500);
