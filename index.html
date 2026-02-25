@@ -8,18 +8,12 @@
 body{
     margin:0;
     background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    color:white;
-    font-family:Arial;
     overflow:hidden;
+    font-family:Arial;
 }
 
 canvas{
-    border-radius:15px;
-    box-shadow:0 0 25px rgba(255,255,255,0.15);
+    display:block;
 }
 
 #questionBox{
@@ -47,12 +41,6 @@ button{
     cursor:pointer;
 }
 
-#scoreCanvas{
-    position:absolute;
-    top:10px;
-    left:50%;
-    transform:translateX(-50%);
-}
 #intro{
     position:fixed;
     inset:0;
@@ -61,7 +49,6 @@ button{
     justify-content:center;
     align-items:center;
     font-size:3em;
-    opacity:0;
     color:yellow;
     font-weight:bold;
 }
@@ -69,8 +56,7 @@ button{
 </head>
 <body>
 
-<canvas id="canvas" width="800" height="500"></canvas>
-<canvas id="scoreCanvas" width="200" height="50"></canvas>
+<canvas id="canvas"></canvas>
 
 <div id="questionBox">
     <h2 id="questionText"></h2>
@@ -88,8 +74,14 @@ button{
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const scoreCanvas = document.getElementById("scoreCanvas");
-const scoreCtx = scoreCanvas.getContext("2d");
+
+/* ================= FULL SCREEN ================= */
+function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize",resizeCanvas);
+resizeCanvas();
 
 /* ================= IMAGE LOADER ================= */
 function load(name){
@@ -111,7 +103,7 @@ const birdFrames = [
 const messageImg = load("message.png");
 const gameoverImg = load("gameover.png");
 
-/* Score PNG'leri: 0.png-9.png */
+/* ================= SCORE PNG ================= */
 const scoreDigits = [];
 for(let i=0;i<=9;i++){
     scoreDigits.push(load(i+".png"));
@@ -131,15 +123,14 @@ for(let i=1;i<=90;i++){
 let currentQuestion = null;
 
 /* ================= GAME VARIABLES ================= */
-let bird = {x:80,y:200,vy:0,frame:0};
+let bird = {x:canvas.width*0.2,y:canvas.height*0.4,vy:0,frame:0};
 let pipes = [];
-let state = "intro"; // intro, menu, play, gameover
+let state = "intro";
 let score = 0;
 
 /* ================= INTRO ANIMATION ================= */
 const introDiv = document.getElementById("intro");
 let introTime=0;
-
 function introLoop(){
     introTime++;
     introDiv.style.opacity = Math.min(introTime/60,1);
@@ -168,13 +159,13 @@ canvas.addEventListener("click",()=>{
 /* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
-    bird.y=200;
+    bird.y=canvas.height*0.4;
     bird.vy=0;
     score=0;
 }
 
 function spawnPipe(){
-    let top = Math.random()*250+50;
+    let top = Math.random()*(canvas.height*0.5)+50;
     pipes.push({x:canvas.width,top});
 }
 
@@ -204,7 +195,7 @@ function checkAnswer(){
     }
 }
 
-/* ================= COUNTDOWN AFTER CORRECT ================= */
+/* ================= COUNTDOWN ================= */
 function countdownStart(){
     let count=3;
     state="countdown";
@@ -212,7 +203,7 @@ function countdownStart(){
         ctx.clearRect(0,0,canvas.width,canvas.height);
         ctx.drawImage(bg,0,0,canvas.width,canvas.height);
         ctx.fillStyle="white";
-        ctx.font="100px Arial";
+        ctx.font=`${Math.floor(canvas.height*0.2)}px Arial`;
         ctx.textAlign="center";
         ctx.fillText(count,canvas.width/2,canvas.height/2);
         count--;
@@ -236,15 +227,15 @@ function update(){
         p.x -= 2;
 
         if(
-            bird.x+30>p.x &&
-            bird.x<p.x+60 &&
-            (bird.y<p.top || bird.y+30>p.top+140)
+            bird.x+canvas.width*0.05>p.x &&
+            bird.x<p.x+canvas.width*0.07 &&
+            (bird.y< p.top || bird.y+canvas.height*0.06>p.top+canvas.height*0.28)
         ){
             state="gameover";
             setTimeout(()=>{ askQuestion(); },500);
         }
 
-        if(!p.scored && p.x+60<bird.x){
+        if(!p.scored && p.x+canvas.width*0.07<bird.x){
             score++;
             p.scored=true;
         }
@@ -262,12 +253,12 @@ function draw(){
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
     pipes.forEach(p=>{
-        ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
-        ctx.drawImage(pipeImg,p.x,p.top+140,60,320);
+        ctx.drawImage(pipeImg,p.x,p.top-320,canvas.width*0.07,320);
+        ctx.drawImage(pipeImg,p.x,p.top+canvas.height*0.14,canvas.width*0.07,320);
     });
 
     if(state!=="menu" && state!=="countdown"){
-        ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,40,30);
+        ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,canvas.width*0.05,canvas.height*0.06);
     }
 
     ctx.drawImage(baseImg,0,canvas.height-50,canvas.width,50);
@@ -285,11 +276,15 @@ function draw(){
 
 /* ================= DRAW SCORE ================= */
 function drawScore(){
+    const scoreCanvas = document.getElementById("scoreCanvas");
+    scoreCanvas.width = canvas.width;
+    scoreCanvas.height = 50;
+    const scoreCtx = scoreCanvas.getContext("2d");
     scoreCtx.clearRect(0,0,scoreCanvas.width,scoreCanvas.height);
     let s = score.toString();
     for(let i=0;i<s.length;i++){
         let d = parseInt(s[i]);
-        scoreCtx.drawImage(scoreDigits[d], i*20,0,20,30);
+        scoreCtx.drawImage(scoreDigits[d], i*50,0,50,50);
     }
 }
 
