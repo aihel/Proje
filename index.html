@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Bird Math Edition(by Omer Asaf Fikir icin sagol bıyıklı) </title>
+<title>By Omer Asaf Proje(Math</title>
 <style>
 body{
     margin:0;
@@ -74,14 +74,41 @@ canvas{
     display:flex;
     justify-content:center;
     align-items:center;
-    flex-direction:column;
-    pointer-events:none; /* tıklamaları engelle */
+    pointer-events:none;
     z-index:1;
 }
 
 #messageImg{
     width:400px;
     height:200px;
+}
+
+/* Info panel */
+#infoBox{
+    position:fixed;
+    top:60px;
+    left:20px;
+    background:rgba(0,0,0,0.8);
+    color:white;
+    padding:10px 15px;
+    border-radius:10px;
+    display:none;
+    z-index:3;
+    font-size:1.2em;
+}
+
+#infoBtn{
+    position:fixed;
+    top:20px;
+    left:20px;
+    z-index:4;
+    padding:10px 15px;
+    background:#444;
+    border:none;
+    border-radius:8px;
+    color:white;
+    font-size:1em;
+    cursor:pointer;
 }
 </style>
 </head>
@@ -106,6 +133,9 @@ canvas{
     <img id="messageImg" src="sprites/message.png" />
 </div>
 
+<button id="infoBtn">i</button>
+<div id="infoBox">Omer Asaf tarafından tasarlanmıştır</div>
+
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -116,6 +146,8 @@ const answersDiv = document.querySelector(".answers");
 const menuBox = document.getElementById("menuBox");
 const messageImg = document.getElementById("messageImg");
 const bgMusic = document.getElementById("bgMusic");
+const infoBtn = document.getElementById("infoBtn");
+const infoBox = document.getElementById("infoBox");
 
 /* ================= IMAGE LOADER ================= */
 function load(name){
@@ -166,7 +198,7 @@ for(let i=1;i<=90;i++){
 /* ================= GAME VARIABLES ================= */
 let bird = {x:150,y:400,vy:0,frame:0};
 let pipes = [];
-let state = "intro"; // intro, question, play, gameover
+let state = "menu"; // menu, question, play, gameover
 let score = 0;
 let currentQuestion = null;
 
@@ -174,7 +206,7 @@ let currentQuestion = null;
 let menuCounter = 0;
 function animateMenu(){
     menuCounter += 0.05;
-    bird.y = 400 + Math.sin(menuCounter)*30;
+    bird.y = 400 + Math.sin(menuCounter)*20;
     bird.frame += 0.2;
 }
 
@@ -226,8 +258,7 @@ function checkAnswer(el){
         setTimeout(()=>{
             questionBox.style.display="none";
             menuBox.style.display="flex";
-            state="intro";
-            setTimeout(startIntro, 3000);
+            state="menu";
         },2000);
     }
 }
@@ -235,21 +266,31 @@ function checkAnswer(el){
 /* ================= START GAME ================= */
 function startGame(){
     resetGame();
+    menuBox.style.display="none";
     state="play";
 }
 
-/* ================= INTRO FLOW ================= */
-function startIntro(){
-    menuBox.style.display="flex";
-    setTimeout(()=>{
-        menuBox.style.display="none";
-        askQuestion();
-    },3000);
-}
+/* ================= INPUT ================= */
+canvas.addEventListener("click",()=>{
+    if(state==="play"){
+        bird.vy=-7;
+    }
+});
+
+infoBtn.addEventListener("click",(e)=>{
+    infoBox.style.display = "block";
+    e.stopPropagation();
+});
+
+document.body.addEventListener("click",(e)=>{
+    if(e.target!==infoBtn){
+        infoBox.style.display="none";
+    }
+});
 
 /* ================= GAME UPDATE ================= */
 function update(){
-    if(state==="intro"){
+    if(state==="menu"){
         animateMenu();
         return;
     }
@@ -313,8 +354,7 @@ function draw(){
         ctx.drawImage(gameoverImg,canvas.width/2-150,200,300,100);
     }
 
-    if(state==="intro"){
-        // overlay message.png + "By Omer Asaf"
+    if(state==="menu"){
         ctx.drawImage(messageImg,canvas.width/2-200,canvas.height/2-100,400,200);
     }
 }
@@ -326,7 +366,6 @@ function loop(){
     requestAnimationFrame(loop);
 }
 
-startIntro();
 loop();
 </script>
 </body>
