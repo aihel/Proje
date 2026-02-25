@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Flappy Bird Math Edition</title>
+<title>Flappy Bird (By Omer asaf)</title>
 <style>
 body{
     margin:0;
@@ -64,9 +64,19 @@ canvas{
     margin-top:20px;
 }
 
+#menuBox{
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background:black;
+}
+
 #messageText{
     color:white;
-    font-size:2em;
+    font-size:3em;
     text-align:center;
 }
 </style>
@@ -114,7 +124,6 @@ const bg = load("background-day.png");
 const baseImg = load("base.png");
 const pipeImg = load("pipe-green.png");
 const gameoverImg = load("gameover.png");
-const messageImg = load("message.png");
 
 const birdFrames = [
     load("yellowbird-upflap.png"),
@@ -171,11 +180,11 @@ canvas.addEventListener("click",()=>{
         menuBox.style.display="none";
         resetGame();
         state="play";
-        bird.vy=-10;
+        bird.vy=-6; // zıplama hafifletildi
         return;
     }
     if(state==="play"){
-        bird.vy=-10;
+        bird.vy=-6;
     }
 });
 
@@ -190,13 +199,13 @@ function resetGame(){
 
 function spawnPipe(){
     let top = Math.random()*300 + 100;
-    pipes.push({x:canvas.width,top:top});
+    pipes.push({x:canvas.width,top:top,passed:false});
 }
 
 /* ================= ASK QUESTION ================= */
 function askQuestion(){
     let q = questions.find(q=>!q.asked);
-    if(!q) return; // tüm sorular soruldu
+    if(!q) return; 
     currentQuestion = q;
     q.asked=true;
 
@@ -220,18 +229,9 @@ function askQuestion(){
 function checkAnswer(el){
     if(el.innerText === currentQuestion.ans){
         questionBox.style.display="none";
-        // 3 saniye sayıp sonra tekrar başlat
-        let count=3;
-        solutionText.innerText="Doğru! Başlıyor...";
-        let interval = setInterval(()=>{
-            solutionText.innerText = "Başlıyor... " + count;
-            count--;
-            if(count<0){
-                clearInterval(interval);
-                resetGame();
-                state="play";
-            }
-        },1000);
+        // Doğru cevap sonrası direkt menüye dön
+        state="menu";
+        menuBox.style.display="flex";
     }else{
         solutionText.innerText = "Yanlış! " + currentQuestion.sol;
         setTimeout(()=>{
@@ -256,12 +256,12 @@ function update(){
 
     pipes.forEach(p=>{
         p.x -=4;
-        if(bird.x+40>p.x && bird.x<p.x+60 &&
+        if(bird.x+40>p.x && bird.x<p.x+80 && // genişlik arttı
            (bird.y< p.top || bird.y+40>p.top+180)){
                state="gameover";
                setTimeout(askQuestion,500);
            }
-        if(!p.passed && p.x+60<bird.x){
+        if(!p.passed && p.x+80<bird.x){ 
             score++;
             p.passed=true;
         }
@@ -272,19 +272,19 @@ function update(){
         setTimeout(askQuestion,500);
     }
 
-    // Spawn new pipes
     if(pipes.length===0 || pipes[pipes.length-1].x<canvas.width-300){
         spawnPipe();
     }
 }
 
 /* ================= DRAW ================= */
-function drawScore(x,y){
+function drawScore(){
     let s = score.toString();
-    let w = 30;
+    let totalWidth = s.length*35;
+    let startX = canvas.width/2 - totalWidth/2;
     for(let i=0;i<s.length;i++){
         let n = s[i];
-        ctx.drawImage(scoreSprites[n],x+i*w,y,30,40);
+        ctx.drawImage(scoreSprites[n],startX+i*35,20,35,50);
     }
 }
 
@@ -293,17 +293,17 @@ function draw(){
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
     pipes.forEach(p=>{
-        ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
-        ctx.drawImage(pipeImg,p.x,p.top+180,60,320);
+        ctx.drawImage(pipeImg,p.x,p.top-320,80,320);
+        ctx.drawImage(pipeImg,p.x,p.top+180,80,320);
     });
 
     ctx.drawImage(baseImg,0,canvas.height-100,canvas.width,100);
 
-    // bird
     ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,50,40);
 
-    // score
-    drawScore(20,20);
+    if(state!=="menu"){
+        drawScore();
+    }
 
     if(state==="gameover"){
         ctx.drawImage(gameoverImg,canvas.width/2-150,200,300,100);
