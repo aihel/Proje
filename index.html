@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flappy Bird Math Edition (By Omer asaf)</title>
+<title>Flappy Bird Math Edition</title>
 <style>
 body{
     margin:0;
@@ -13,6 +13,17 @@ body{
 }
 canvas{
     display:block;
+}
+#intro{
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:5em;
+    color:yellow;
+    font-weight:bold;
+    background:black;
 }
 #questionBox{
     position:fixed;
@@ -37,22 +48,13 @@ button{
     border-radius:8px;
     cursor:pointer;
 }
-#intro{
-    position:fixed;
-    inset:0;
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:4em;
-    color:yellow;
-    font-weight:bold;
-}
 </style>
 </head>
 <body>
 
 <canvas id="canvas"></canvas>
+
+<div id="intro">ByOmerAsaf</div>
 
 <div id="questionBox">
     <h2 id="questionText"></h2>
@@ -61,41 +63,38 @@ button{
     <p id="solution"></p>
 </div>
 
-<div id="intro">ByOmerAsaf</div>
-
 <audio id="bgMusic" loop autoplay>
     <source src="88.m4a" type="audio/m4a">
 </audio>
 
 <script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-/* =================== FULL SCREEN =================== */
 function resizeCanvas(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
 }
 window.addEventListener("resize",resizeCanvas);
 resizeCanvas();
 
-/* =================== IMAGE LOADER =================== */
-function load(name){ const img = new Image(); img.src="sprites/"+name; return img; }
+/* ================= IMAGE LOADER ================= */
+function load(name){ let img=new Image(); img.src="sprites/"+name; return img; }
 
-const bg = load("background-day.png");
-const baseImg = load("base.png");
-const pipeImg = load("pipe-green.png");
-const messageImg = load("message.png");
-const gameoverImg = load("gameover.png");
+const bg=load("background-day.png");
+const baseImg=load("base.png");
+const pipeImg=load("pipe-green.png");
+const messageImg=load("message.png");
+const gameoverImg=load("gameover.png");
 
-const birdFrames = [
+const birdFrames=[
     load("yellowbird-upflap.png"),
     load("yellowbird-midflap.png"),
     load("yellowbird-downflap.png")
 ];
 
-/* =================== SCORE PNG =================== */
-const scoreDigits = {
+/* ================= SCORE PNG ================= */
+const scoreDigits={
     "0": load("00000.png"),
     "1": load("111.png"),
     "2": load("99999.png"),
@@ -108,8 +107,8 @@ const scoreDigits = {
     "9": load("99.png")
 };
 
-/* =================== MATEMATIK SORULARI =================== */
-const questions = [];
+/* ================= QUESTIONS ================= */
+const questions=[];
 for(let i=0;i<90;i++){
     let a=Math.floor(Math.random()*8)+2;
     let b=Math.floor(Math.random()*9)+1;
@@ -119,17 +118,17 @@ for(let i=0;i<90;i++){
         sol:`İşçi sayısı artarsa süre azalır. Cevap: ${b}`
     });
 }
-let usedQuestions = [];
-let currentQuestion = null;
+let usedQuestions=[];
+let currentQuestion=null;
 
-/* =================== GAME VARIABLES =================== */
-let bird = {x:canvas.width*0.2, y:canvas.height*0.4, vy:0, frame:0};
-let pipes = [];
+/* ================= GAME VARIABLES ================= */
+let bird={x:0.2*canvas.width,y:0.4*canvas.height,vy:0,frame:0};
+let pipes=[];
 let state="intro";
 let score=0;
 
-/* =================== INTRO =================== */
-const introDiv = document.getElementById("intro");
+/* ================= INTRO ================= */
+const introDiv=document.getElementById("intro");
 let introTime=0;
 function introLoop(){
     introTime++;
@@ -143,7 +142,7 @@ function introLoop(){
 }
 introLoop();
 
-/* =================== INPUT =================== */
+/* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="menu"){
         resetGame();
@@ -156,10 +155,10 @@ canvas.addEventListener("click",()=>{
     }
 });
 
-/* =================== GAME FUNCTIONS =================== */
+/* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
-    bird.y=canvas.height*0.4;
+    bird.y=0.4*canvas.height;
     bird.vy=0;
     score=0;
 }
@@ -170,11 +169,11 @@ function spawnPipe(){
 }
 setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
 
-/* =================== MATEMATIK SORUSU =================== */
+/* ================= QUESTIONS ================= */
 function askQuestion(){
-    if(usedQuestions.length>=questions.length) return; // tüm sorular kullanıldı
+    if(usedQuestions.length>=questions.length) return;
     do{
-        currentQuestion = questions[Math.floor(Math.random()*questions.length)];
+        currentQuestion=questions[Math.floor(Math.random()*questions.length)];
     }while(usedQuestions.includes(currentQuestion));
     usedQuestions.push(currentQuestion);
 
@@ -199,7 +198,7 @@ function checkAnswer(){
     }
 }
 
-/* =================== COUNTDOWN =================== */
+/* ================= COUNTDOWN ================= */
 function countdownStart(){
     let count=3;
     state="countdown";
@@ -219,7 +218,7 @@ function countdownStart(){
     },1000);
 }
 
-/* =================== UPDATE =================== */
+/* ================= UPDATE ================= */
 function update(){
     if(state!=="play") return;
     bird.vy+=0.4;
@@ -228,29 +227,25 @@ function update(){
 
     pipes.forEach(p=>{
         p.x-=2;
-        // Çarpma kontrol
-        if(
-            bird.x+canvas.width*0.05>p.x &&
-            bird.x<p.x+canvas.width*0.07 &&
-            (bird.y<p.top || bird.y+canvas.height*0.06>p.top+canvas.height*0.28)
+        if(bird.x+canvas.width*0.05>p.x &&
+           bird.x<p.x+canvas.width*0.07 &&
+           (bird.y<p.top || bird.y+canvas.height*0.06>p.top+canvas.height*0.28)
         ){
             state="gameover";
             setTimeout(()=>{ askQuestion(); },500);
         }
-        // Skor
         if(!p.scored && p.x+canvas.width*0.07<bird.x){
             score++;
             p.scored=true;
         }
     });
-
     if(bird.y>canvas.height-50 || bird.y<0){
         state="gameover";
         setTimeout(()=>{ askQuestion(); },500);
     }
 }
 
-/* =================== DRAW =================== */
+/* ================= DRAW ================= */
 function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
@@ -277,7 +272,7 @@ function draw(){
     drawScore();
 }
 
-/* =================== DRAW SCORE =================== */
+/* ================= DRAW SCORE ================= */
 function drawScore(){
     let s=score.toString();
     for(let i=0;i<s.length;i++){
@@ -287,7 +282,7 @@ function drawScore(){
     }
 }
 
-/* =================== LOOP =================== */
+/* ================= LOOP ================= */
 function loop(){
     update();
     draw();
