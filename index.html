@@ -32,17 +32,15 @@ canvas{
     color:white;
     font-size:1.3em;
 }
-input{
-    padding:10px;
-    width:140px;
-    text-align:center;
-    font-size:1.1em;
-}
-button{
+button.option{
     padding:10px 25px;
     border:none;
     border-radius:8px;
     cursor:pointer;
+    display:block;
+    margin:5px 0;
+    width:200px;
+    font-size:1.2em;
 }
 </style>
 </head>
@@ -50,8 +48,7 @@ button{
 <canvas id="canvas" width="500" height="700"></canvas>
 <div id="questionBox">
     <h2 id="questionText"></h2>
-    <input id="answerInput" placeholder="Cevap">
-    <button onclick="checkAnswer()">Kontrol</button>
+    <div id="options"></div>
     <p id="solution"></p>
 </div>
 
@@ -128,7 +125,7 @@ canvas.addEventListener("click",()=>{
     if(state==="menu"){
         resetGame();
         state="play";
-        bird.vy=-6.3; // %10 azaltılmış
+        bird.vy=-6.3;
         bgm.play();
         return;
     }
@@ -154,9 +151,9 @@ function spawnPipe(){
 
 setInterval(spawnPipe,2000);
 
-// Ask question
+// Ask question with options
 function askQuestion(){
-    if(awaitingQuestion) return; // Tek seferlik
+    if(awaitingQuestion) return; 
     awaitingQuestion=true;
     let available = questions.filter((q,i)=>!askedQuestions.has(i));
     if(available.length===0){
@@ -169,21 +166,35 @@ function askQuestion(){
     askedQuestions.add(questions.indexOf(currentQuestion));
 
     document.getElementById("questionText").innerText = currentQuestion.q;
-    document.getElementById("solution").innerText = "";
-    document.getElementById("answerInput").value="";
+    const opts = document.getElementById("options");
+    opts.innerHTML="";
+
+    // Şıklar: doğru cevabı rastgele konumlandır
+    const correct = parseInt(currentQuestion.ans);
+    let choices = [correct-1, correct, correct+1, correct+2];
+    choices = choices.map(String);
+
+    for(let c of choices){
+        let btn = document.createElement("button");
+        btn.className="option";
+        btn.innerText=c;
+        btn.onclick=()=>checkAnswerBtn(c);
+        opts.appendChild(btn);
+    }
+
+    document.getElementById("solution").innerText="";
     document.getElementById("questionBox").style.display="flex";
 }
 
-// Check answer
-function checkAnswer(){
-    const val = document.getElementById("answerInput").value;
+// Check option
+function checkAnswerBtn(val){
     if(val==currentQuestion.ans){
         document.getElementById("questionBox").style.display="none";
         resetGame();
         state="menu";
         awaitingQuestion=false;
     }else{
-        document.getElementById("solution").innerText = "Yanlış! " + currentQuestion.sol;
+        document.getElementById("solution").innerText="Yanlış! "+currentQuestion.sol;
     }
 }
 
@@ -191,13 +202,13 @@ function checkAnswer(){
 function update(){
     if(state!=="play") return;
 
-    bird.vy+=0.35; // gravity
+    bird.vy+=0.35; 
     bird.y+=bird.vy;
     bird.frame+=0.2;
 
     for(let i=pipes.length-1;i>=0;i--){
         let p=pipes[i];
-        p.x-=4.32; // %10 yavaş
+        p.x-=4.32; 
 
         const hitW=pipeImg.width*0.8;
         const hitHTop=pipeImg.height*0.8;
@@ -209,7 +220,7 @@ function update(){
         if(hitTop||hitBottom){
             console.log("Hit!",p.x,bird.y);
             state="gameover";
-            setTimeout(()=>askQuestion(),1000);
+            setTimeout(()=>askQuestion(),500);
         }
 
         if(!p.passed && p.x+60<bird.x){
@@ -224,7 +235,7 @@ function update(){
 
     if(bird.y>canvas.height-50 || bird.y<0){
         state="gameover";
-        setTimeout(()=>askQuestion(),1000);
+        setTimeout(()=>askQuestion(),500);
     }
 }
 
