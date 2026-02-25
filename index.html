@@ -11,7 +11,9 @@ body{
     justify-content:center;
     align-items:center;
     height:100vh;
+    color:white;
     font-family:Arial;
+    user-select:none;
 }
 canvas{
     border-radius:15px;
@@ -28,76 +30,57 @@ canvas{
     gap:20px;
     text-align:center;
     color:white;
-    padding:20px;
+    font-size:1.3em;
+}
+input{
+    padding:10px;
+    width:140px;
+    text-align:center;
+    font-size:1.1em;
 }
 button{
     padding:10px 25px;
     border:none;
     border-radius:8px;
     cursor:pointer;
-    font-size:1.2em;
-}
-.answerBtn{
-    display:block;
-    margin:10px auto;
-    width:60%;
-}
-#infoBtn{
-    position:absolute;
-    top:10px;
-    left:10px;
-    padding:5px 10px;
-    font-size:0.9em;
-    cursor:pointer;
-}
-#scoreDisplay{
-    position:absolute;
-    top:10px;
-    left:50%;
-    transform:translateX(-50%);
 }
 </style>
 </head>
 <body>
-
-<canvas id="canvas" width="600" height="700"></canvas>
-
+<canvas id="canvas" width="500" height="700"></canvas>
 <div id="questionBox">
     <h2 id="questionText"></h2>
-    <div id="options"></div>
+    <input id="answerInput" placeholder="Cevap">
+    <button onclick="checkAnswer()">Kontrol</button>
     <p id="solution"></p>
 </div>
-
-<button id="infoBtn">i</button>
-<div id="scoreDisplay"></div>
-
-<audio id="bgm" loop>
-    <source src="88.m4a" type="audio/mpeg">
-</audio>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const bgm = document.getElementById("bgm");
-bgm.play();
 
-/* ================= IMAGES ================= */
+/* ================= IMAGE LOADER ================= */
 function load(name){
     const img = new Image();
-    img.src = "sprites/"+name;
+    img.src = "sprites/" + name;
     return img;
 }
 
+// Arkaplan ve base
 const bg = load("background-day.png");
 const baseImg = load("base.png");
+
+// Pipes
 const pipeImg = load("pipe-green.png");
 
+// Bird
 const birdFrames = [
     load("yellowbird-upflap.png"),
     load("yellowbird-midflap.png"),
     load("yellowbird-downflap.png")
 ];
 
+// Menü ve gameover
 const messageImg = load("message.png");
 const gameoverImg = load("gameover.png");
 
@@ -115,49 +98,45 @@ const scoreSprites = {
     "9": load("99.png")
 };
 
-/* ================= QUESTIONS ================= */
-let questions = [];
+/* ================= QUESTIONS (90) ================= */
+const questions=[];
 for(let i=1;i<=90;i++){
-    let a=Math.floor(Math.random()*8)+2;
-    let b=Math.floor(Math.random()*9)+1;
+    let a = Math.floor(Math.random()*8)+2;
+    let b = Math.floor(Math.random()*9)+1;
     questions.push({
-        q:`${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
-        options:[
-            (b-1).toString(), b.toString(), (b+1).toString(), (b+2).toString()
-        ],
-        ans:b.toString(),
-        sol:`İşçi sayısı artarsa süre azalır (ters orantı). Cevap: ${b}`
+        q: `${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
+        ans: b.toString(),
+        sol: `İşçi sayısı artarsa süre azalır (ters orantı). Cevap: ${b}`
     });
 }
+let askedQuestions = new Set();
+let currentQuestion = null;
 
 /* ================= GAME VARIABLES ================= */
-let bird={x:100,y:300,vy:0,frame:0};
-let pipes=[];
-let state="intro"; // intro -> menu -> play -> gameover -> question
+let bird = {x:100,y:300,vy:0,frame:0};
+let pipes = [];
+let state="menu";
 let score=0;
-let currentQuestion=null;
+
+/* ================= AUDIO ================= */
+const bgm = new Audio("88.m4a");
+bgm.loop=true;
 
 /* ================= INPUT ================= */
 canvas.addEventListener("click",()=>{
     if(state==="menu"){
-        state="play";
         resetGame();
-        bird.vy=-6; 
-    } else if(state==="play"){
-        bird.vy=-6; 
+        state="play";
+        bird.vy=-6.3; // %10 azaltılmış
+        bgm.play();
+        return;
+    }
+    if(state==="play"){
+        bird.vy=-6.3;
     }
 });
 
-/* ================= INFO BUTTON ================= */
-let infoVisible=false;
-const infoBtn=document.getElementById("infoBtn");
-infoBtn.addEventListener("click",()=>{
-    if(!infoVisible){
-        alert("Omer Asaf Tarafından tasarlanmıştır");
-    }
-});
-
-/* ================= FUNCTIONS ================= */
+/* ================= GAME FUNCTIONS ================= */
 function resetGame(){
     pipes=[];
     bird.y=300;
@@ -165,44 +144,40 @@ function resetGame(){
     score=0;
 }
 
+// Spawn pipe
 function spawnPipe(){
-    let top=Math.random()*200+150;
-    pipes.push({x:canvas.width,top:top,passed:false});
+    let top = Math.random()*250+50;
+    pipes.push({x:canvas.width, top:top, passed:false});
 }
 
-setInterval(()=>{if(state==="play") spawnPipe();},2000);
+setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
 
+// Ask question
 function askQuestion(){
-    if(questions.length===0) return;
-    const idx=Math.floor(Math.random()*questions.length);
-    currentQuestion=questions.splice(idx,1)[0];
-    document.getElementById("questionText").innerText=currentQuestion.q;
-    const optsDiv=document.getElementById("options");
-    optsDiv.innerHTML="";
-    currentQuestion.options.forEach(opt=>{
-        const btn=document.createElement("button");
-        btn.innerText=opt;
-        btn.className="answerBtn";
-        btn.onclick=()=>checkAnswer(opt);
-        optsDiv.appendChild(btn);
-    });
-    document.getElementById("solution").innerText="";
+    let available = questions.filter((q,i)=>!askedQuestions.has(i));
+    if(available.length===0){
+        state="menu";
+        return;
+    }
+    let index = Math.floor(Math.random()*available.length);
+    currentQuestion = available[index];
+    askedQuestions.add(questions.indexOf(currentQuestion));
+
+    document.getElementById("questionText").innerText = currentQuestion.q;
+    document.getElementById("solution").innerText = "";
+    document.getElementById("answerInput").value="";
     document.getElementById("questionBox").style.display="flex";
-    state="question";
 }
 
-function checkAnswer(val){
-    if(val===currentQuestion.ans){
+// Check answer
+function checkAnswer(){
+    const val = document.getElementById("answerInput").value;
+    if(val==currentQuestion.ans){
         document.getElementById("questionBox").style.display="none";
         resetGame();
         state="menu";
     }else{
-        document.getElementById("solution").innerText="Yanlış! "+currentQuestion.sol;
-        setTimeout(()=>{
-            document.getElementById("questionBox").style.display="none";
-            resetGame();
-            state="menu";
-        },2000);
+        document.getElementById("solution").innerText = "Yanlış! " + currentQuestion.sol;
     }
 }
 
@@ -210,20 +185,20 @@ function checkAnswer(val){
 function update(){
     if(state!=="play") return;
 
-    bird.vy+=0.35;
+    bird.vy+=0.35; // gravity
     bird.y+=bird.vy;
     bird.frame+=0.2;
 
-    pipes.forEach(p=>{
+    for(let i=pipes.length-1;i>=0;i--){
+        let p=pipes[i];
         p.x-=4.32; // %10 yavaş
 
-        // Hitbox
         const hitW=pipeImg.width*0.8;
         const hitHTop=pipeImg.height*0.8;
         const hitHBottom=pipeImg.height*0.8;
 
-        const hitTop=bird.x+40>p.x && bird.x<p.x+hitW && bird.y<p.top;
-        const hitBottom=bird.x+40>p.x && bird.x<p.x+hitW && bird.y+30>p.top+140;
+        const hitTop = bird.x+40>p.x && bird.x<p.x+hitW && bird.y<p.top;
+        const hitBottom = bird.x+40>p.x && bird.x<p.x+hitW && bird.y+30>p.top+140;
 
         if(hitTop||hitBottom){
             console.log("Hit!",p.x,bird.y);
@@ -231,12 +206,16 @@ function update(){
             setTimeout(()=>askQuestion(),1000);
         }
 
-        // Score
         if(!p.passed && p.x+60<bird.x){
             score++;
             p.passed=true;
         }
-    });
+
+        // Ekrandan çıkan pipe'i sil
+        if(p.x + 60 < 0){
+            pipes.splice(i,1);
+        }
+    }
 
     if(bird.y>canvas.height-50 || bird.y<0){
         state="gameover";
@@ -249,52 +228,49 @@ function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
+    // Pipes
     pipes.forEach(p=>{
         ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
         ctx.drawImage(pipeImg,p.x,p.top+140,60,320);
     });
 
-    if(state!=="menu" && state!=="intro" && state!=="question"){
-        const f=Math.floor(bird.frame)%3;
-        ctx.drawImage(birdFrames[f],bird.x,bird.y,40,30);
+    // Bird
+    if(state!=="menu"){
+        ctx.drawImage(
+            birdFrames[Math.floor(bird.frame)%3],
+            bird.x,bird.y,50,40
+        );
     }
 
+    // Base
     ctx.drawImage(baseImg,0,canvas.height-50,canvas.width,50);
 
-    // Menu
+    // Menü
     if(state==="menu"){
         ctx.drawImage(messageImg,canvas.width/2-110,canvas.height/2-60,220,120);
     }
 
+    // Gameover
     if(state==="gameover"){
         ctx.drawImage(gameoverImg,canvas.width/2-120,canvas.height/2-60,240,120);
     }
 
     // Score
-    const scoreStr=score.toString();
-    let x=canvas.width/2-((scoreStr.length*30)/2);
-    for(let i=0;i<scoreStr.length;i++){
-        const s=scoreStr[i];
-        if(scoreSprites[s]) ctx.drawImage(scoreSprites[s],x+i*30,20,30,30);
+    let s = score.toString();
+    let offset = 0;
+    for(let i=0;i<s.length;i++){
+        let digit = s[i];
+        ctx.drawImage(scoreSprites[digit],canvas.width/2-((s.length*30)/2)+offset,20,30,50);
+        offset+=30;
     }
 }
 
 /* ================= LOOP ================= */
 function loop(){
-    if(state==="intro"){
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.fillStyle="white";
-        ctx.font="40px Arial";
-        ctx.textAlign="center";
-        ctx.fillText("By Omer Asaf",canvas.width/2,canvas.height/2);
-        setTimeout(()=>state="menu",3000);
-    } else {
-        update();
-        draw();
-    }
+    update();
+    draw();
     requestAnimationFrame(loop);
 }
-
 loop();
 </script>
 </body>
