@@ -3,142 +3,304 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FLAPPY BIRD Matamatik Edition (By Omer Asaf)</title>
+<title>Flappy Bird Math Edition</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;}
-canvas{display:block;margin:0 auto;background:#87CEEB;} /* Gökyüzü */
-#splash{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;flex-direction:column;background:#000;color:white;font-size:4em;animation:fadeInOut 3s forwards;z-index:1000;}
-@keyframes fadeInOut{0%{opacity:0;transform:scale(0.5);}50%{opacity:1;transform:scale(1.1);}100%{opacity:0;transform:scale(1);}}
-#scoreDisplay{position:absolute;top:10px;right:20px;color:white;font-size:2em;z-index:1001;}
-#mathQuestion{position:absolute;top:10%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:15px;display:none;max-width:80%;text-align:center;font-size:1.8em;z-index:1002;}
-#answerInput{margin-top:10px;font-size:1.5em;padding:8px;border-radius:10px;border:none;}
-#feedback{margin-top:10px;font-size:1.4em;color:yellow;}
+body{
+    margin:0;
+    background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    color:white;
+    font-family:Arial;
+    overflow:hidden;
+}
+
+canvas{
+    border-radius:15px;
+    box-shadow:0 0 25px rgba(255,255,255,0.15);
+}
+
+#questionBox{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.9);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    gap:20px;
+    text-align:center;
+}
+
+input{
+    padding:10px;
+    width:180px;
+    text-align:center;
+    font-size:1.1em;
+}
+button{
+    padding:10px 25px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+#scoreCanvas{
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+}
+#intro{
+    position:fixed;
+    inset:0;
+    background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:3em;
+    opacity:0;
+    color:yellow;
+    font-weight:bold;
+}
 </style>
 </head>
 <body>
 
-<div id="splash">By Omer Asaf</div>
+<canvas id="canvas" width="800" height="500"></canvas>
+<canvas id="scoreCanvas" width="200" height="50"></canvas>
 
-<div id="scoreDisplay">Score: 0</div>
-<div id="mathQuestion">
-    <div id="questionText"></div>
-    <input type="number" id="answerInput" placeholder="Cevabı gir"/>
-    <div id="feedback"></div>
+<div id="questionBox">
+    <h2 id="questionText"></h2>
+    <input id="answerInput" placeholder="Cevap">
+    <button onclick="checkAnswer()">Kontrol</button>
+    <p id="solution"></p>
 </div>
 
-<audio id="bgMusic" src="assets/88.m4a" loop autoplay></audio>
-<canvas id="gameCanvas"></canvas>
+<div id="intro">ByOmerAsaf</div>
+
+<audio id="bgMusic" loop autoplay>
+    <source src="88.m4a" type="audio/m4a">
+</audio>
 
 <script>
-// --- SPLASH ---
-setTimeout(() => { document.getElementById('splash').style.display='none'; startGame(); }, 3000);
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const scoreCanvas = document.getElementById("scoreCanvas");
+const scoreCtx = scoreCanvas.getContext("2d");
 
-// --- FLAPPY BIRD AYARLARI ---
-const canvas=document.getElementById('gameCanvas');
-const ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+/* ================= IMAGE LOADER ================= */
+function load(name){
+    const img = new Image();
+    img.src = "sprites/" + name;
+    return img;
+}
 
-let bird={x:150,y:canvas.height/2,width:40,height:40,dy:0};
-const gravity=0.7;
-const jump=-12;
-let pipes=[],pipeWidth=80,pipeGap=200,frame=0,score=0;
-let gameOver=false;
+const bg = load("background-day.png");
+const baseImg = load("base.png");
+const pipeImg = load("pipe-green.png");
 
-// --- MATEMATİK SORULARI ---
-let mathQuestions=[];
+const birdFrames = [
+    load("bluebird-upflap.png"),
+    load("bluebird-midflap.png"),
+    load("bluebird-downflap.png")
+];
+
+const messageImg = load("message.png");
+const gameoverImg = load("gameover.png");
+
+/* Score PNG'leri: 0.png-9.png */
+const scoreDigits = [];
+for(let i=0;i<=9;i++){
+    scoreDigits.push(load(i+".png"));
+}
+
+/* ================= QUESTIONS ================= */
+const questions = [];
 for(let i=1;i<=90;i++){
-    let a=Math.floor(Math.random()*20)+1;
-    let b=Math.floor(Math.random()*20)+1;
-    let op=['+','-','*'][Math.floor(Math.random()*3)];
-    let q=`${a} ${op} ${b}`;
-    let ans=eval(q);
-    mathQuestions.push({q:q,ans:ans});
+    let a = Math.floor(Math.random()*8)+2;
+    let b = Math.floor(Math.random()*9)+1;
+    questions.push({
+        q: `${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
+        ans: (b).toString(),
+        sol: `İşçi sayısı artarsa süre azalır. Cevap: ${b}`
+    });
 }
-let currentQuestion=0;
+let currentQuestion = null;
 
-// --- GAME FUNCTIONS ---
-function startGame(){
-    bird.y=canvas.height/2; bird.dy=0; pipes=[]; score=0; gameOver=false;
-    showMathQuestion();
-    requestAnimationFrame(gameLoop);
+/* ================= GAME VARIABLES ================= */
+let bird = {x:80,y:200,vy:0,frame:0};
+let pipes = [];
+let state = "intro"; // intro, menu, play, gameover
+let score = 0;
+
+/* ================= INTRO ANIMATION ================= */
+const introDiv = document.getElementById("intro");
+let introTime=0;
+
+function introLoop(){
+    introTime++;
+    introDiv.style.opacity = Math.min(introTime/60,1);
+    if(introTime<180){ // 3 saniye
+        requestAnimationFrame(introLoop);
+    } else {
+        state="menu";
+        introDiv.style.display="none";
+    }
 }
+introLoop();
 
-function gameLoop(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    // --- MATEMATİK SORUSU ---
-    if(document.getElementById('mathQuestion').style.display=='block'){
-        requestAnimationFrame(gameLoop);
+/* ================= INPUT ================= */
+canvas.addEventListener("click",()=>{
+    if(state==="menu"){
+        resetGame();
+        state="play";
+        bird.vy=-7;
         return;
     }
-
-    // --- FLAPPY ---
-    bird.dy+=gravity;
-    bird.y+=bird.dy;
-    ctx.fillStyle='yellow';
-    ctx.fillRect(bird.x,bird.y,bird.width,bird.height);
-
-    // --- PIPES ---
-    if(frame%100===0){
-        let pipeY=Math.random()*(canvas.height-pipeGap-200)+100;
-        pipes.push({x:canvas.width,y:pipeY});
-    }
-    ctx.fillStyle='green';
-    for(let i=0;i<pipes.length;i++){
-        let p=pipes[i];
-        p.x-=4;
-        ctx.fillRect(p.x,0,pipeWidth,p.y);
-        ctx.fillRect(p.x,p.y+pipeGap,pipeWidth,canvas.height-p.y-pipeGap);
-
-        // çarpışma
-        if(bird.x+bird.width>p.x && bird.x< p.x+pipeWidth && (bird.y<p.y || bird.y+bird.height>p.y+pipeGap)){
-            gameOver=true;
-        }
-        if(p.x+pipeWidth<bird.x && !p.passed){score++;p.passed=true;}
-    }
-
-    // --- GAMEOVER ---
-    if(bird.y+bird.height>canvas.height || bird.y<0) gameOver=true;
-    document.getElementById('scoreDisplay').innerText='Score: '+score;
-
-    if(gameOver){ showMathQuestion(); return; }
-
-    frame++;
-    requestAnimationFrame(gameLoop);
-}
-
-// --- JUMP ---
-document.addEventListener('keydown',e=>{ if(e.code==='Space') bird.dy=jump; });
-
-// --- MATEMATİK SORUSU LOGİĞİ ---
-function showMathQuestion(){
-    if(currentQuestion>=mathQuestions.length){ currentQuestion=0; }
-    let mq=document.getElementById('mathQuestion');
-    mq.style.display='block';
-    let qobj=mathQuestions[currentQuestion];
-    document.getElementById('questionText').innerText=`Soru: ${qobj.q}`;
-    document.getElementById('answerInput').value='';
-    document.getElementById('feedback').innerText='';
-    document.getElementById('answerInput').focus();
-}
-
-document.getElementById('answerInput').addEventListener('keydown',function(e){
-    if(e.key==='Enter'){
-        let ans=parseFloat(this.value);
-        let correct=mathQuestions[currentQuestion].ans;
-        let feedback=document.getElementById('feedback');
-        if(ans===correct){
-            feedback.style.color='lightgreen';
-            feedback.innerText='✅ Doğru! 3 saniye sonra oyun başlıyor';
-            setTimeout(()=>{ document.getElementById('mathQuestion').style.display='none'; currentQuestion++; startGame(); },3000);
-        } else {
-            feedback.style.color='red';
-            feedback.innerText=`❌ Yanlış! Doğru cevap: ${correct}`;
-        }
+    if(state==="play"){
+        bird.vy=-7;
     }
 });
+
+/* ================= GAME FUNCTIONS ================= */
+function resetGame(){
+    pipes=[];
+    bird.y=200;
+    bird.vy=0;
+    score=0;
+}
+
+function spawnPipe(){
+    let top = Math.random()*250+50;
+    pipes.push({x:canvas.width,top});
+}
+
+setInterval(()=>{ if(state==="play") spawnPipe(); },2000);
+
+/* ================= QUESTIONS ================= */
+function askQuestion(){
+    currentQuestion = questions[Math.floor(Math.random()*questions.length)];
+    document.getElementById("questionText").innerText = currentQuestion.q;
+    document.getElementById("solution").innerText = "";
+    document.getElementById("answerInput").value = "";
+    document.getElementById("questionBox").style.display = "flex";
+}
+
+function checkAnswer(){
+    const val = document.getElementById("answerInput").value;
+    if(val == currentQuestion.ans){
+        document.getElementById("questionBox").style.display = "none";
+        countdownStart();
+    }else{
+        document.getElementById("solution").innerText = "Yanlış! " + currentQuestion.sol;
+        setTimeout(()=>{
+            document.getElementById("questionBox").style.display = "none";
+            resetGame();
+            state="menu";
+        },2000);
+    }
+}
+
+/* ================= COUNTDOWN AFTER CORRECT ================= */
+function countdownStart(){
+    let count=3;
+    state="countdown";
+    const countdownInterval = setInterval(()=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+        ctx.fillStyle="white";
+        ctx.font="100px Arial";
+        ctx.textAlign="center";
+        ctx.fillText(count,canvas.width/2,canvas.height/2);
+        count--;
+        if(count<0){
+            clearInterval(countdownInterval);
+            resetGame();
+            state="play";
+        }
+    },1000);
+}
+
+/* ================= UPDATE ================= */
+function update(){
+    if(state!=="play") return;
+
+    bird.vy += 0.4;
+    bird.y += bird.vy;
+    bird.frame += 0.2;
+
+    pipes.forEach(p=>{
+        p.x -= 2;
+
+        if(
+            bird.x+30>p.x &&
+            bird.x<p.x+60 &&
+            (bird.y<p.top || bird.y+30>p.top+140)
+        ){
+            state="gameover";
+            setTimeout(()=>{ askQuestion(); },500);
+        }
+
+        if(!p.scored && p.x+60<bird.x){
+            score++;
+            p.scored=true;
+        }
+    });
+
+    if(bird.y>canvas.height-50 || bird.y<0){
+        state="gameover";
+        setTimeout(()=>{ askQuestion(); },500);
+    }
+}
+
+/* ================= DRAW ================= */
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(bg,0,0,canvas.width,canvas.height);
+
+    pipes.forEach(p=>{
+        ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
+        ctx.drawImage(pipeImg,p.x,p.top+140,60,320);
+    });
+
+    if(state!=="menu" && state!=="countdown"){
+        ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,40,30);
+    }
+
+    ctx.drawImage(baseImg,0,canvas.height-50,canvas.width,50);
+
+    if(state==="menu"){
+        ctx.drawImage(messageImg,canvas.width/2-110,canvas.height/2-60,220,120);
+    }
+
+    if(state==="gameover"){
+        ctx.drawImage(gameoverImg,canvas.width/2-120,canvas.height/2-60,240,120);
+    }
+
+    drawScore();
+}
+
+/* ================= DRAW SCORE ================= */
+function drawScore(){
+    scoreCtx.clearRect(0,0,scoreCanvas.width,scoreCanvas.height);
+    let s = score.toString();
+    for(let i=0;i<s.length;i++){
+        let d = parseInt(s[i]);
+        scoreCtx.drawImage(scoreDigits[d], i*20,0,20,30);
+    }
+}
+
+/* ================= LOOP ================= */
+function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
 </script>
 </body>
 </html>
