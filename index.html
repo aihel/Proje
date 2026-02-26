@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Flappy Bird Math Edition</title>
+<title>Flappy Bird Math Edition - 7th Grade</title>
 <style>
 body{
     margin:0;
@@ -12,39 +12,92 @@ body{
     align-items:center;
     height:100vh;
     color:white;
-    font-family:Arial;
+    font-family:'Arial', sans-serif;
     user-select:none;
 }
 canvas{
     border-radius:15px;
-    box-shadow:0 0 25px rgba(255,255,255,0.15);
+    box-shadow:0 0 25px rgba(0,255,255,0.3);
 }
 #questionBox{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.85);
+    background:rgba(0,0,0,0.92);
     display:none;
     justify-content:center;
     align-items:center;
     flex-direction:column;
-    gap:20px;
+    gap:30px;
     text-align:center;
     color:white;
-    font-size:1.3em;
+    font-size:1.5em;
+    z-index:100;
+    backdrop-filter:blur(5px);
+}
+#questionText{
+    color:#00ffff;
+    text-shadow:0 0 10px cyan, 0 0 20px blue;
+    max-width:600px;
+    padding:20px;
+    background:rgba(0,0,0,0.7);
+    border-radius:15px;
+    border:2px solid cyan;
+    box-shadow:0 0 30px rgba(0,255,255,0.3);
+}
+#options{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin:20px 0;
 }
 button.option{
-    padding:10px 25px;
+    padding:20px 35px;
     border:none;
-    border-radius:8px;
+    border-radius:50px;
     cursor:pointer;
-    display:block;
-    margin:5px 0;
-    width:220px;
+    font-size:2em;
+    font-weight:bold;
+    background:black;
+    color:#ff00ff;
+    border:3px solid #ff00ff;
+    box-shadow:0 0 20px magenta, 0 0 40px rgba(255,0,255,0.3);
+    transition:0.3s;
+    min-width:120px;
+}
+button.option:hover{
+    transform:scale(1.1);
+    background:#ff00ff;
+    color:black;
+    box-shadow:0 0 30px magenta, 0 0 60px hotpink;
+}
+#solution{
+    color:#ffff00;
+    text-shadow:0 0 10px yellow, 0 0 20px orange;
     font-size:1.2em;
+    background:rgba(0,0,0,0.5);
+    padding:15px 30px;
+    border-radius:10px;
+    border:1px solid yellow;
+    max-width:500px;
+}
+.soru-sayac{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:rgba(0,0,0,0.8);
+    color:#00ff00;
+    padding:10px 20px;
+    border-radius:30px;
+    border:2px solid #00ff00;
+    box-shadow:0 0 15px lime;
+    font-weight:bold;
+    z-index:101;
 }
 </style>
 </head>
 <body>
+<div class="soru-sayac" id="soruSayac">Kalan Soru: 100</div>
 <canvas id="canvas" width="500" height="700"></canvas>
 <div id="questionBox">
     <h2 id="questionText"></h2>
@@ -56,7 +109,7 @@ button.option{
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-/* =============== IMAGES =============== */
+/* =============== IMAGES (SENIN LOADER'IN) =============== */
 function load(name){ const img=new Image(); img.src="sprites/"+name; return img; }
 const bg = load("background-day.png");
 const baseImg = load("base.png");
@@ -64,228 +117,324 @@ const pipeImg = load("pipe-green.png");
 const birdFrames = [load("yellowbird-upflap.png"),load("yellowbird-midflap.png"),load("yellowbird-downflap.png")];
 const messageImg = load("message.png");
 const gameoverImg = load("gameover.png");
-
 const scoreSprites = {"0":load("00000.png"),"1":load("111.png"),"2":load("99999.png"),"3":load("33.png"),"4":load("44.png"),"5":load("55.png"),"6":load("66.png"),"7":load("77.png"),"8":load("88.png"),"9":load("99.png")};
 
-/* =============== QUESTIONS =============== */
-const questions=[];
-for(let i=1;i<=90;i++){
-    let a=Math.floor(Math.random()*8)+2;
-    let b=Math.floor(Math.random()*9)+1;
-    questions.push({
-        q:`${a} işçi bir işi ${b*2} günde yapıyor. İşçi sayısı ${a*2} olursa kaç günde biter?`,
-        ans:b.toString(),
-        sol:`İşçi sayısı artarsa süre azalır (ters orantı). Cevap: ${b}`
-    });
-}
-let askedQuestions=new Set();
-let currentQuestion=null;
-let awaitingQuestion=false;
+/* =============== 7. SINIF DOĞRU-TERS ORANTI SORULARI =============== */
+const questions = [
+    // KOLAY SORULAR (1-30)
+    // Doğru Orantı
+    {q: "3 kg elma 24 TL ise 5 kg elma kaç TL'dir?", ans: "40", sol: "Doğru orantı: 3/24 = 5/x → x = (24×5)/3 = 40 TL"},
+    {q: "Bir araç 4 saatte 320 km yol alıyorsa, 7 saatte kaç km yol alır?", ans: "560", sol: "Doğru orantı: 4/320 = 7/x → x = (320×7)/4 = 560 km"},
+    {q: "2 defter 18 TL ise 6 defter kaç TL'dir?", ans: "54", sol: "Doğru orantı: 2/18 = 6/x → x = (18×6)/2 = 54 TL"},
+    {q: "5 kalem 30 TL ise 9 kalem kaç TL'dir?", ans: "54", sol: "Doğru orantı: 5/30 = 9/x → x = (30×9)/5 = 54 TL"},
+    {q: "8 metre kumaş 120 TL ise 3 metre kumaş kaç TL'dir?", ans: "45", sol: "Doğru orantı: 8/120 = 3/x → x = (120×3)/8 = 45 TL"},
+    
+    // Ters Orantı
+    {q: "4 işçi bir işi 9 günde bitiriyor. Aynı işi 6 işçi kaç günde bitirir?", ans: "6", sol: "Ters orantı: 4×9 = 6×x → x = (4×9)/6 = 6 gün"},
+    {q: "Bir musluk havuzu 8 saatte dolduruyor. Aynı havuzu 2 musluk kaç saatte doldurur?", ans: "4", sol: "Ters orantı: 1×8 = 2×x → x = 8/2 = 4 saat"},
+    {q: "5 usta bir duvarı 12 günde örüyor. 3 usta aynı duvarı kaç günde örer?", ans: "20", sol: "Ters orantı: 5×12 = 3×x → x = (5×12)/3 = 20 gün"},
+    {q: "2 traktör tarlayı 15 saatte sürüyor. 5 traktör aynı tarlayı kaç saatte sürer?", ans: "6", sol: "Ters orantı: 2×15 = 5×x → x = (2×15)/5 = 6 saat"},
+    {q: "6 işçi bir işi 8 günde bitiriyor. 4 işçi aynı işi kaç günde bitirir?", ans: "12", sol: "Ters orantı: 6×8 = 4×x → x = (6×8)/4 = 12 gün"},
+    
+    // ORTA ZORLUKTA SORULAR (31-60)
+    {q: "Bir otobüs 80 km/s hızla 6 saatte gittiği yolu, 120 km/s hızla kaç saatte gider?", ans: "4", sol: "Ters orantı: 80×6 = 120×x → x = (80×6)/120 = 4 saat"},
+    {q: "15 kg portakaldan 9 kg suyu çıkıyorsa, 25 kg portakaldan kaç kg su çıkar?", ans: "15", sol: "Doğru orantı: 15/9 = 25/x → x = (9×25)/15 = 15 kg"},
+    {q: "Bir fabrikada 12 makine 30 dakikada 360 ürün üretiyor. Aynı makinelerle 20 dakikada kaç ürün üretilir?", ans: "240", sol: "Doğru orantı: 30/360 = 20/x → x = (360×20)/30 = 240 ürün"},
+    {q: "3 kg fındık 150 TL ise 500 TL'ye kaç kg fındık alınır?", ans: "10", sol: "Doğru orantı: 3/150 = x/500 → x = (3×500)/150 = 10 kg"},
+    {q: "Bir havuzu 4 musluk 9 saatte dolduruyor. 6 musluk aynı havuzu kaç saatte doldurur?", ans: "6", sol: "Ters orantı: 4×9 = 6×x → x = (4×9)/6 = 6 saat"},
+    
+    {q: "10 işçi bir işi 15 günde yapıyor. İşçi sayısı 5 artırılırsa iş kaç günde biter?", ans: "10", sol: "Ters orantı: 10×15 = 15×x → x = (10×15)/15 = 10 gün"},
+    {q: "Bir dikdörtgenin boyu 12 cm, eni 8 cm'dir. Boy 4 cm azaltılırsa alanın aynı kalması için en kaç cm artırılmalı?", ans: "4", sol: "Ters orantı: 12×8 = 8×(8+x) → x = 4 cm"},
+    {q: "240 sayfa kitabı 15 günde okuyan bir kişi, aynı hızla 400 sayfayı kaç günde okur?", ans: "25", sol: "Doğru orantı: 240/15 = 400/x → x = (15×400)/240 = 25 gün"},
+    {q: "Bir araç 90 km/s hızla 8 saatte gittiği yolu, 120 km/s hızla kaç saatte gider?", ans: "6", sol: "Ters orantı: 90×8 = 120×x → x = (90×8)/120 = 6 saat"},
+    {q: "2 kg undan 3 kg ekmek yapılıyorsa, 5 kg undan kaç kg ekmek yapılır?", ans: "7.5", sol: "Doğru orantı: 2/3 = 5/x → x = (3×5)/2 = 7.5 kg"},
+    
+    // KARIŞIK SORULAR (61-90)
+    {q: "Bir işçi 8 saat çalışarak 400 TL kazanıyor. Aynı işçi 5 saat çalışırsa kaç TL kazanır?", ans: "250", sol: "Doğru orantı: 8/400 = 5/x → x = (400×5)/8 = 250 TL"},
+    {q: "Bir usta 6 günde 18 m² duvar örüyor. 3 günde kaç m² duvar örer?", ans: "9", sol: "Doğru orantı: 6/18 = 3/x → x = (18×3)/6 = 9 m²"},
+    {q: "3 saatte 15 km yürüyen bir kişi, 7 saatte kaç km yürür?", ans: "35", sol: "Doğru orantı: 3/15 = 7/x → x = (15×7)/3 = 35 km"},
+    {q: "Bir musluk havuzu 6 saatte dolduruyor. 3 musluk aynı havuzu kaç saatte doldurur?", ans: "2", sol: "Ters orantı: 1×6 = 3×x → x = 6/3 = 2 saat"},
+    {q: "8 kg portakaldan 6 kg su çıkıyorsa, 12 kg portakaldan kaç kg su çıkar?", ans: "9", sol: "Doğru orantı: 8/6 = 12/x → x = (6×12)/8 = 9 kg"},
+    
+    {q: "2 boya ustası 12 saatte bir evi boyuyor. 4 usta aynı evi kaç saatte boyar?", ans: "6", sol: "Ters orantı: 2×12 = 4×x → x = (2×12)/4 = 6 saat"},
+    {q: "30 litre sütten 5 kg peynir yapılıyorsa, 42 litre sütten kaç kg peynir yapılır?", ans: "7", sol: "Doğru orantı: 30/5 = 42/x → x = (5×42)/30 = 7 kg"},
+    {q: "Bir kamyon 60 km/s hızla 10 saatte gidiyor. 75 km/s hızla kaç saatte gider?", ans: "8", sol: "Ters orantı: 60×10 = 75×x → x = (60×10)/75 = 8 saat"},
+    {q: "9 işçi bir işi 20 günde yapıyor. 15 işçi aynı işi kaç günde yapar?", ans: "12", sol: "Ters orantı: 9×20 = 15×x → x = (9×20)/15 = 12 gün"},
+    {q: "4 saatte 28 km yürüyen bir kişi, 9 saatte kaç km yürür?", ans: "63", sol: "Doğru orantı: 4/28 = 9/x → x = (28×9)/4 = 63 km"},
+    
+    // ZOR SORULAR (91-100)
+    {q: "Bir otobüs 100 km/s hızla 6 saatte gittiği yolu, 120 km/s hızla kaç saatte gider?", ans: "5", sol: "Ters orantı: 100×6 = 120×x → x = (100×6)/120 = 5 saat"},
+    {q: "8 işçi günde 5 saat çalışarak bir işi 12 günde bitiriyor. Aynı işi 6 işçi günde 8 saat çalışarak kaç günde bitirir?", ans: "10", sol: "İşçi×saat×gün eşitliği: 8×5×12 = 6×8×x → x = (8×5×12)/(6×8) = 10 gün"},
+    {q: "4 traktör 7 saatte 140 dönüm tarla sürüyorsa, 7 traktör 5 saatte kaç dönüm sürer?", ans: "175", sol: "Doğru orantı: (4×7)/(140) = (7×5)/x → x = (140×35)/(28) = 175 dönüm"},
+    {q: "2 usta 3 çırak bir işi 10 günde bitiriyor. 4 usta 6 çırak aynı işi kaç günde bitirir?", ans: "5", sol: "Ters orantı: İşçi sayısı 2 katına çıktı, süre yarıya iner: 10/2 = 5 gün"},
+    {q: "Bir araç 80 km/s hızla 4 saat, 100 km/s hızla 3 saat gidiyor. Toplam yol kaç km'dir?", ans: "620", sol: "80×4 + 100×3 = 320 + 300 = 620 km"},
+    
+    {q: "1 kg şeker 12 TL ise 750 gr şeker kaç TL'dir?", ans: "9", sol: "Doğru orantı: 1000/12 = 750/x → x = (12×750)/1000 = 9 TL"},
+    {q: "3 m kumaş 45 TL ise 2.5 m kumaş kaç TL'dir?", ans: "37.5", sol: "Doğru orantı: 3/45 = 2.5/x → x = (45×2.5)/3 = 37.5 TL"},
+    {q: "5 işçi bir işi 24 günde yapıyor. Aynı işi 8 işçi kaç günde yapar?", ans: "15", sol: "Ters orantı: 5×24 = 8×x → x = (5×24)/8 = 15 gün"},
+    {q: "6 saatte 240 km giden araç, 9 saatte kaç km gider?", ans: "360", sol: "Doğru orantı: 6/240 = 9/x → x = (240×9)/6 = 360 km"},
+    {q: "Bir fabrikada 20 makine 8 saatte 1600 ürün üretiyor. 25 makine 6 saatte kaç ürün üretir?", ans: "1500", sol: "Doğru orantı: (20×8)/(1600) = (25×6)/x → x = (1600×150)/(160) = 1500 ürün"}
+];
 
-/* =============== GAME VARIABLES =============== */
-let bird={x:100,y:300,vy:0,frame:0};
-let pipes=[];
-let state="menu";
-let score=0;
-const bgm = new Audio("88.m4a"); bgm.loop=true;
-let pipeInterval = null;
+/* =============== GAME STATE =============== */
+const game = {
+    state: "menu", // menu, playing, gameover
+    bird: {
+        x: 100,
+        y: 300,
+        vy: 0,
+        frame: 0,
+        width: 50,
+        height: 40
+    },
+    pipes: [],
+    score: 0,
+    askedQuestions: new Set(),
+    currentQuestion: null,
+    awaitingQuestion: false,
+    pipeGap: 140,
+    pipeWidth: 60,
+    gravity: 0.35,
+    jumpPower: -6
+};
+
+// Soru sayacını güncelle
+function updateQuestionCounter() {
+    const kalan = questions.length - game.askedQuestions.size;
+    document.getElementById("soruSayac").innerText = `Kalan Soru: ${kalan}`;
+    document.getElementById("soruSayac").style.color = kalan < 20 ? '#ff0000' : (kalan < 50 ? '#ffff00' : '#00ff00');
+}
+
+/* =============== AUDIO =============== */
+const bgm = new Audio("88.m4a");
+bgm.loop = true;
 
 /* =============== INPUT =============== */
-canvas.addEventListener("click",()=>{
-    if(state==="menu"){
-        resetGame(); 
-        state="play"; 
-        bird.vy=-6; 
-        bgm.play(); 
-        startPipeSpawning();
-        return;
+canvas.addEventListener("click", () => {
+    if(game.state === "menu") {
+        startGame();
+    } else if(game.state === "playing") {
+        game.bird.vy = game.jumpPower;
     }
-    if(state==="play"){ bird.vy=-6; }
 });
 
-/* =============== FUNCTIONS =============== */
-function resetGame(){ 
-    pipes=[]; 
-    bird.y=300; 
-    bird.vy=0; 
-    score=0; 
-    stopPipeSpawning();
+/* =============== GAME FUNCTIONS =============== */
+function startGame() {
+    game.state = "playing";
+    game.bird.y = 300;
+    game.bird.vy = 0;
+    game.pipes = [];
+    game.score = 0;
+    bgm.play();
 }
 
-function startPipeSpawning() {
-    if (pipeInterval) clearInterval(pipeInterval);
-    pipeInterval = setInterval(() => {
-        if(state === "play") {
-            let top = Math.random() * 250 + 50;
-            pipes.push({x:canvas.width, top:top, passed:false});
-        }
-    }, 2000);
+function gameOver() {
+    game.state = "gameover";
+    bgm.pause();
+    bgm.currentTime = 0;
+    setTimeout(() => showQuestion(), 500);
 }
 
-function stopPipeSpawning() {
-    if (pipeInterval) {
-        clearInterval(pipeInterval);
-        pipeInterval = null;
-    }
-}
-
-function askQuestion(){
-    if(awaitingQuestion) return;
-    awaitingQuestion=true;
-    stopPipeSpawning();
+function showQuestion() {
+    if(game.awaitingQuestion) return;
     
-    let available=questions.filter((q,i)=>!askedQuestions.has(i));
-    if(available.length===0){ 
-        state="menu"; 
-        awaitingQuestion=false; 
-        return; 
+    // Kullanılmamış soru bul
+    const available = questions.filter((q, i) => !game.askedQuestions.has(i));
+    if(available.length === 0) {
+        // Tüm sorular bitti - özel mesaj
+        document.getElementById("questionText").innerText = "TEBRİKLER! 🎉\nTüm soruları cevapladın!";
+        document.getElementById("options").innerHTML = "";
+        document.getElementById("solution").innerHTML = "Sen gerçek bir matematik şampiyonusun! 🌟";
+        document.getElementById("questionBox").style.display = "flex";
+        game.state = "menu";
+        return;
     }
-    let index=Math.floor(Math.random()*available.length);
-    currentQuestion=available[index];
-    askedQuestions.add(questions.indexOf(currentQuestion));
-
-    document.getElementById("questionText").innerText=currentQuestion.q;
-    const opts=document.getElementById("options");
-    opts.innerHTML="";
-    const correct=parseInt(currentQuestion.ans);
-    let choices=[correct-1,correct,correct+1,correct+2].map(String);
-    for(let c of choices){
-        let btn=document.createElement("button");
-        btn.className="option"; 
-        btn.innerText=c;
-        btn.onclick=()=>checkAnswerBtn(c);
-        opts.appendChild(btn);
+    
+    game.awaitingQuestion = true;
+    const index = Math.floor(Math.random() * available.length);
+    game.currentQuestion = available[index];
+    game.askedQuestions.add(questions.indexOf(game.currentQuestion));
+    updateQuestionCounter();
+    
+    // UI'ı göster
+    document.getElementById("questionText").innerText = game.currentQuestion.q;
+    const optsDiv = document.getElementById("options");
+    optsDiv.innerHTML = "";
+    
+    const correct = parseFloat(game.currentQuestion.ans);
+    // Şıkları oluştur (doğru cevap ve 3 yanlış)
+    let choices = [correct];
+    while(choices.length < 4) {
+        let wrong;
+        if(Number.isInteger(correct)) {
+            wrong = correct + Math.floor(Math.random() * 5) - 2;
+            if(wrong < 1) wrong = correct + 2;
+        } else {
+            wrong = (Math.random() * 10 + 5).toFixed(1);
+        }
+        if(!choices.includes(parseFloat(wrong))) {
+            choices.push(parseFloat(wrong));
+        }
     }
-    document.getElementById("solution").innerText="";
-    document.getElementById("questionBox").style.display="flex";
+    
+    // Şıkları karıştır
+    choices = choices.sort(() => Math.random() - 0.5);
+    
+    choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.innerText = choice;
+        btn.onclick = () => checkAnswer(choice.toString());
+        optsDiv.appendChild(btn);
+    });
+    
+    document.getElementById("solution").innerText = "";
+    document.getElementById("questionBox").style.display = "flex";
 }
 
-function checkAnswerBtn(val){
-    if(val==currentQuestion.ans){
-        document.getElementById("questionBox").style.display="none";
-        resetGame(); 
-        state="menu"; 
-        awaitingQuestion=false;
-    }else{
-        document.getElementById("solution").innerText="Yanlış! "+currentQuestion.sol;
+function checkAnswer(answer) {
+    if(answer === game.currentQuestion.ans) {
+        // Doğru cevap - menüye dön
+        document.getElementById("questionBox").style.display = "none";
+        game.state = "menu";
+        game.awaitingQuestion = false;
+    } else {
+        // Yanlış cevap - çözümü göster
+        document.getElementById("solution").innerHTML = "❌ Yanlış!<br><br>" + game.currentQuestion.sol;
     }
 }
+
+/* =============== PIPE SPAWNER =============== */
+setInterval(() => {
+    if(game.state === "playing") {
+        const topHeight = Math.random() * 250 + 50;
+        game.pipes.push({
+            x: canvas.width,
+            top: topHeight,
+            passed: false
+        });
+    }
+}, 2000);
 
 /* =============== UPDATE =============== */
-function update(){
-    if(state!=="play") return;
+function update() {
+    if(game.state !== "playing") return;
     
-    bird.vy+=0.35; 
-    bird.y+=bird.vy; 
-    bird.frame+=0.2;
-
-    // Bird sınırları
-    if(bird.y > canvas.height - 50) {
-        bird.y = canvas.height - 50;
-        bird.vy = 0;
-    }
-    if(bird.y < 0) {
-        bird.y = 0;
-        bird.vy = 0;
-    }
-
+    // Bird fiziği
+    game.bird.vy += game.gravity;
+    game.bird.y += game.bird.vy;
+    game.bird.frame += 0.2;
+    
     // Pipe'ları güncelle
-    for(let i = pipes.length - 1; i >= 0; i--) {
-        let p = pipes[i];
-        p.x -= 4; 
-
+    for(let i = game.pipes.length - 1; i >= 0; i--) {
+        const pipe = game.pipes[i];
+        pipe.x -= 4;
+        
         // Çarpışma kontrolü
-        const birdWidth = 50;
-        const birdHeight = 40;
-        const pipeWidth = 60;
-        const pipeGap = 140;
+        const birdRight = game.bird.x + game.bird.width;
+        const birdBottom = game.bird.y + game.bird.height;
         
         // Üst boru çarpışması
-        const hitTop = bird.x + birdWidth > p.x && 
-                      bird.x < p.x + pipeWidth && 
-                      bird.y < p.top;
-        
-        // Alt boru çarpışması
-        const hitBottom = bird.x + birdWidth > p.x && 
-                         bird.x < p.x + pipeWidth && 
-                         bird.y + birdHeight > p.top + pipeGap;
-
-        if(hitTop || hitBottom) { 
-            state = "gameover"; 
-            stopPipeSpawning();
-            setTimeout(() => askQuestion(), 500); 
+        if(birdRight > pipe.x && 
+           game.bird.x < pipe.x + game.pipeWidth && 
+           game.bird.y < pipe.top) {
+            gameOver();
             return;
         }
-
+        
+        // Alt boru çarpışması
+        if(birdRight > pipe.x && 
+           game.bird.x < pipe.x + game.pipeWidth && 
+           birdBottom > pipe.top + game.pipeGap) {
+            gameOver();
+            return;
+        }
+        
         // Skor kontrolü
-        if(!p.passed && p.x + pipeWidth < bird.x) { 
-            score++; 
-            p.passed = true; 
+        if(!pipe.passed && pipe.x + game.pipeWidth < game.bird.x) {
+            game.score++;
+            pipe.passed = true;
         }
-
+        
         // Pipe'ı kaldır
-        if(p.x + pipeWidth < 0) { 
-            pipes.splice(i, 1); 
+        if(pipe.x + game.pipeWidth < 0) {
+            game.pipes.splice(i, 1);
         }
+    }
+    
+    // Yerden çıkma kontrolü
+    if(game.bird.y + game.bird.height > canvas.height - 50 || game.bird.y < 0) {
+        gameOver();
     }
 }
 
 /* =============== DRAW =============== */
-function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(bg,0,0,canvas.width,canvas.height);
-
-    pipes.forEach(p=>{
-        // Üst boru
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Arkaplan
+    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    
+    // Pipe'lar
+    game.pipes.forEach(pipe => {
+        // Üst pipe (normal)
         ctx.save();
-        ctx.translate(p.x + 30, p.top);
-        ctx.scale(1, 1);
-        ctx.drawImage(pipeImg, -30, -320, 60, 320);
+        ctx.translate(pipe.x + game.pipeWidth/2, pipe.top);
+        ctx.drawImage(pipeImg, -game.pipeWidth/2, -320, game.pipeWidth, 320);
         ctx.restore();
-
-        // Alt boru (ters çizilmiş)
+        
+        // Alt pipe (ters)
         ctx.save();
-        ctx.translate(p.x + 30, p.top + 140);
+        ctx.translate(pipe.x + game.pipeWidth/2, pipe.top + game.pipeGap);
         ctx.scale(1, -1);
-        ctx.drawImage(pipeImg, -30, -320, 60, 320);
+        ctx.drawImage(pipeImg, -game.pipeWidth/2, -320, game.pipeWidth, 320);
         ctx.restore();
     });
-
-    if(state !== "menu" && state !== "gameover"){
-        ctx.drawImage(birdFrames[Math.floor(bird.frame) % 3], bird.x, bird.y, 50, 40);
+    
+    // Kuş (sadece playing ve gameover durumlarında)
+    if(game.state !== "menu") {
+        const frameIndex = Math.floor(game.bird.frame) % 3;
+        ctx.drawImage(birdFrames[frameIndex], game.bird.x, game.bird.y, game.bird.width, game.bird.height);
     }
-
+    
+    // Zemin
     ctx.drawImage(baseImg, 0, canvas.height - 50, canvas.width, 50);
-
-    if(state === "menu") { 
-        ctx.drawImage(messageImg, canvas.width/2 - 110, canvas.height/2 - 60, 220, 120); 
+    
+    // Menü mesajı
+    if(game.state === "menu") {
+        ctx.drawImage(messageImg, canvas.width/2 - 110, canvas.height/2 - 60, 220, 120);
     }
-    if(state === "gameover") { 
-        ctx.drawImage(gameoverImg, canvas.width/2 - 120, canvas.height/2 - 60, 240, 120); 
+    
+    // Gameover mesajı
+    if(game.state === "gameover") {
+        ctx.drawImage(gameoverImg, canvas.width/2 - 120, canvas.height/2 - 60, 240, 120);
     }
-
-    // Score
-    let s = score.toString(); 
+    
+    // Skor
+    const scoreStr = game.score.toString();
     let offset = 0;
-    for(let i = 0; i < s.length; i++){
-        let digit = s[i];
-        if(scoreSprites[digit]){
-            ctx.drawImage(scoreSprites[digit], canvas.width/2 - ((s.length * 30) / 2) + offset, 20, 30, 50);
+    for(let i = 0; i < scoreStr.length; i++) {
+        const digit = scoreStr[i];
+        if(scoreSprites[digit]) {
+            const x = canvas.width/2 - (scoreStr.length * 30)/2 + offset;
+            ctx.drawImage(scoreSprites[digit], x, 20, 30, 50);
         }
         offset += 30;
     }
 }
 
-/* =============== LOOP =============== */
-function loop(){ 
-    update(); 
-    draw(); 
-    requestAnimationFrame(loop); 
+/* =============== GAME LOOP =============== */
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
-// Başlangıçta pipe spawn'ı kapalı
-stopPipeSpawning();
-loop();
+// Soru sayacını başlat
+updateQuestionCounter();
+
+// Oyunu başlat
+gameLoop();
 </script>
 </body>
 </html>
