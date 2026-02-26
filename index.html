@@ -88,25 +88,58 @@ let pipes=[];
 let state="menu";
 let score=0;
 const bgm = new Audio("88.m4a"); bgm.loop=true;
+let pipeInterval = null;
 
 /* =============== INPUT =============== */
 canvas.addEventListener("click",()=>{
     if(state==="menu"){
-        resetGame(); state="play"; bird.vy=-6; bgm.play(); return;
+        resetGame(); 
+        state="play"; 
+        bird.vy=-6; 
+        bgm.play(); 
+        startPipeSpawning();
+        return;
     }
     if(state==="play"){ bird.vy=-6; }
 });
 
 /* =============== FUNCTIONS =============== */
-function resetGame(){ pipes=[]; bird.y=300; bird.vy=0; score=0; }
-function spawnPipe(){ if(state!=="play") return; let top=Math.random()*250+50; pipes.push({x:canvas.width,top:top,passed:false}); }
-setInterval(spawnPipe,2000);
+function resetGame(){ 
+    pipes=[]; 
+    bird.y=300; 
+    bird.vy=0; 
+    score=0; 
+    stopPipeSpawning();
+}
+
+function startPipeSpawning() {
+    if (pipeInterval) clearInterval(pipeInterval);
+    pipeInterval = setInterval(() => {
+        if(state === "play") {
+            let top = Math.random() * 250 + 50;
+            pipes.push({x:canvas.width, top:top, passed:false});
+        }
+    }, 2000);
+}
+
+function stopPipeSpawning() {
+    if (pipeInterval) {
+        clearInterval(pipeInterval);
+        pipeInterval = null;
+    }
+}
 
 function askQuestion(){
     if(awaitingQuestion) return;
     awaitingQuestion=true;
+    stopPipeSpawning();
+    
     let available=questions.filter((q,i)=>!askedQuestions.has(i));
-    if(available.length===0){ state="menu"; awaitingQuestion=false; return; }
+    if(available.length===0){ 
+        state="menu"; 
+        awaitingQuestion=false; 
+        return; 
+    }
     let index=Math.floor(Math.random()*available.length);
     currentQuestion=available[index];
     askedQuestions.add(questions.indexOf(currentQuestion));
@@ -118,7 +151,8 @@ function askQuestion(){
     let choices=[correct-1,correct,correct+1,correct+2].map(String);
     for(let c of choices){
         let btn=document.createElement("button");
-        btn.className="option"; btn.innerText=c;
+        btn.className="option"; 
+        btn.innerText=c;
         btn.onclick=()=>checkAnswerBtn(c);
         opts.appendChild(btn);
     }
@@ -129,7 +163,9 @@ function askQuestion(){
 function checkAnswerBtn(val){
     if(val==currentQuestion.ans){
         document.getElementById("questionBox").style.display="none";
-        resetGame(); state="menu"; awaitingQuestion=false;
+        resetGame(); 
+        state="menu"; 
+        awaitingQuestion=false;
     }else{
         document.getElementById("solution").innerText="Yanlış! "+currentQuestion.sol;
     }
@@ -138,39 +174,59 @@ function checkAnswerBtn(val){
 /* =============== UPDATE =============== */
 function update(){
     if(state!=="play") return;
-    bird.vy+=0.35; bird.y+=bird.vy; bird.frame+=0.2;
+    
+    bird.vy+=0.35; 
+    bird.y+=bird.vy; 
+    bird.frame+=0.2;
 
-    let pipesCopy=[...pipes];
-    for(let i=0;i<pipesCopy.length;i++){
-        let p=pipesCopy[i];
-        p.x-=4; 
-
-        const hitW=50; // Genişlik
-        const hitHTop=320; // Üst boru yüksekliği
-        const hitHBottom=320; // Alt boru yüksekliği
-
-        // Çarpışma kontrolü
-        const hitTop = bird.x+50>p.x && bird.x<p.x+60 && bird.y<p.top;
-        const hitBottom = bird.x+50>p.x && bird.x<p.x+60 && bird.y+40>p.top+140;
-
-        if(hitTop||hitBottom){ 
-            state="gameover"; 
-            setTimeout(()=>askQuestion(),500); 
-        }
-
-        if(!p.passed && p.x+60<bird.x){ 
-            score++; 
-            p.passed=true; 
-        }
-
-        if(p.x + 60 < 0){ 
-            pipes.splice(pipes.indexOf(p),1); 
-        }
+    // Bird sınırları
+    if(bird.y > canvas.height - 50) {
+        bird.y = canvas.height - 50;
+        bird.vy = 0;
+    }
+    if(bird.y < 0) {
+        bird.y = 0;
+        bird.vy = 0;
     }
 
-    if(bird.y>canvas.height-50 || bird.y<0){ 
-        state="gameover"; 
-        setTimeout(()=>askQuestion(),500); 
+    // Pipe'ları güncelle
+    for(let i = pipes.length - 1; i >= 0; i--) {
+        let p = pipes[i];
+        p.x -= 4; 
+
+        // Çarpışma kontrolü
+        const birdWidth = 50;
+        const birdHeight = 40;
+        const pipeWidth = 60;
+        const pipeGap = 140;
+        
+        // Üst boru çarpışması
+        const hitTop = bird.x + birdWidth > p.x && 
+                      bird.x < p.x + pipeWidth && 
+                      bird.y < p.top;
+        
+        // Alt boru çarpışması
+        const hitBottom = bird.x + birdWidth > p.x && 
+                         bird.x < p.x + pipeWidth && 
+                         bird.y + birdHeight > p.top + pipeGap;
+
+        if(hitTop || hitBottom) { 
+            state = "gameover"; 
+            stopPipeSpawning();
+            setTimeout(() => askQuestion(), 500); 
+            return;
+        }
+
+        // Skor kontrolü
+        if(!p.passed && p.x + pipeWidth < bird.x) { 
+            score++; 
+            p.passed = true; 
+        }
+
+        // Pipe'ı kaldır
+        if(p.x + pipeWidth < 0) { 
+            pipes.splice(i, 1); 
+        }
     }
 }
 
@@ -180,43 +236,55 @@ function draw(){
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
     pipes.forEach(p=>{
-        // Üst boru (düz)
+        // Üst boru
         ctx.save();
-        ctx.translate(p.x + 30, p.top - 160); // Borunun ortasına taşı
-        ctx.scale(1, 1); // Normal
-        ctx.drawImage(pipeImg, -30, -160, 60, 320);
+        ctx.translate(p.x + 30, p.top);
+        ctx.scale(1, 1);
+        ctx.drawImage(pipeImg, -30, -320, 60, 320);
         ctx.restore();
 
         // Alt boru (ters çizilmiş)
         ctx.save();
-        ctx.translate(p.x + 30, p.top + 140 + 160); // Alt borunun ortasına taşı
-        ctx.scale(1, -1); // Y ekseninde ters çevir
-        ctx.drawImage(pipeImg, -30, -160, 60, 320);
+        ctx.translate(p.x + 30, p.top + 140);
+        ctx.scale(1, -1);
+        ctx.drawImage(pipeImg, -30, -320, 60, 320);
         ctx.restore();
     });
 
-    if(state!=="menu"){
-        ctx.drawImage(birdFrames[Math.floor(bird.frame)%3],bird.x,bird.y,50,40);
+    if(state !== "menu" && state !== "gameover"){
+        ctx.drawImage(birdFrames[Math.floor(bird.frame) % 3], bird.x, bird.y, 50, 40);
     }
 
-    ctx.drawImage(baseImg,0,canvas.height-50,canvas.width,50);
+    ctx.drawImage(baseImg, 0, canvas.height - 50, canvas.width, 50);
 
-    if(state==="menu"){ ctx.drawImage(messageImg,canvas.width/2-110,canvas.height/2-60,220,120); }
-    if(state==="gameover"){ ctx.drawImage(gameoverImg,canvas.width/2-120,canvas.height/2-60,240,120); }
+    if(state === "menu") { 
+        ctx.drawImage(messageImg, canvas.width/2 - 110, canvas.height/2 - 60, 220, 120); 
+    }
+    if(state === "gameover") { 
+        ctx.drawImage(gameoverImg, canvas.width/2 - 120, canvas.height/2 - 60, 240, 120); 
+    }
 
     // Score
-    let s=score.toString(); let offset=0;
-    for(let i=0;i<s.length;i++){
-        let digit=s[i];
+    let s = score.toString(); 
+    let offset = 0;
+    for(let i = 0; i < s.length; i++){
+        let digit = s[i];
         if(scoreSprites[digit]){
-            ctx.drawImage(scoreSprites[digit],canvas.width/2-((s.length*30)/2)+offset,20,30,50);
+            ctx.drawImage(scoreSprites[digit], canvas.width/2 - ((s.length * 30) / 2) + offset, 20, 30, 50);
         }
-        offset+=30;
+        offset += 30;
     }
 }
 
 /* =============== LOOP =============== */
-function loop(){ update(); draw(); requestAnimationFrame(loop); }
+function loop(){ 
+    update(); 
+    draw(); 
+    requestAnimationFrame(loop); 
+}
+
+// Başlangıçta pipe spawn'ı kapalı
+stopPipeSpawning();
 loop();
 </script>
 </body>
