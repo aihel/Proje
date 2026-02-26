@@ -145,21 +145,33 @@ function update(){
         let p=pipesCopy[i];
         p.x-=4; 
 
-        const hitW=pipeImg.width*0.8;
-        const hitHTop=pipeImg.height*0.8;
-        const hitHBottom=pipeImg.height*0.8;
+        const hitW=50; // Genişlik
+        const hitHTop=320; // Üst boru yüksekliği
+        const hitHBottom=320; // Alt boru yüksekliği
 
-        const hitTop = bird.x+50>p.x && bird.x<p.x+hitW && bird.y<p.top;
-        const hitBottom = bird.x+50>p.x && bird.x<p.x+hitW && bird.y+40>p.top+140;
+        // Çarpışma kontrolü
+        const hitTop = bird.x+50>p.x && bird.x<p.x+60 && bird.y<p.top;
+        const hitBottom = bird.x+50>p.x && bird.x<p.x+60 && bird.y+40>p.top+140;
 
-        if(hitTop||hitBottom){ state="gameover"; setTimeout(()=>askQuestion(),500); }
+        if(hitTop||hitBottom){ 
+            state="gameover"; 
+            setTimeout(()=>askQuestion(),500); 
+        }
 
-        if(!p.passed && p.x+60<bird.x){ score++; p.passed=true; }
+        if(!p.passed && p.x+60<bird.x){ 
+            score++; 
+            p.passed=true; 
+        }
 
-        if(p.x + 60 < 0){ pipes.splice(pipes.indexOf(p),1); }
+        if(p.x + 60 < 0){ 
+            pipes.splice(pipes.indexOf(p),1); 
+        }
     }
 
-    if(bird.y>canvas.height-50 || bird.y<0){ state="gameover"; setTimeout(()=>askQuestion(),500); }
+    if(bird.y>canvas.height-50 || bird.y<0){ 
+        state="gameover"; 
+        setTimeout(()=>askQuestion(),500); 
+    }
 }
 
 /* =============== DRAW =============== */
@@ -168,8 +180,19 @@ function draw(){
     ctx.drawImage(bg,0,0,canvas.width,canvas.height);
 
     pipes.forEach(p=>{
-        ctx.drawImage(pipeImg,p.x,p.top-320,60,320);
-        ctx.drawImage(pipeImg,p.x,p.top+140,60,320);
+        // Üst boru (düz)
+        ctx.save();
+        ctx.translate(p.x + 30, p.top - 160); // Borunun ortasına taşı
+        ctx.scale(1, 1); // Normal
+        ctx.drawImage(pipeImg, -30, -160, 60, 320);
+        ctx.restore();
+
+        // Alt boru (ters çizilmiş)
+        ctx.save();
+        ctx.translate(p.x + 30, p.top + 140 + 160); // Alt borunun ortasına taşı
+        ctx.scale(1, -1); // Y ekseninde ters çevir
+        ctx.drawImage(pipeImg, -30, -160, 60, 320);
+        ctx.restore();
     });
 
     if(state!=="menu"){
@@ -185,7 +208,9 @@ function draw(){
     let s=score.toString(); let offset=0;
     for(let i=0;i<s.length;i++){
         let digit=s[i];
-        ctx.drawImage(scoreSprites[digit],canvas.width/2-((s.length*30)/2)+offset,20,30,50);
+        if(scoreSprites[digit]){
+            ctx.drawImage(scoreSprites[digit],canvas.width/2-((s.length*30)/2)+offset,20,30,50);
+        }
         offset+=30;
     }
 }
