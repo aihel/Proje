@@ -1,423 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>Flappy Bird Math Edition - 7th Grade</title>
-<style>
-body{
-    margin:0;
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    color:white;
-    font-family:'Arial', sans-serif;
-    user-select:none;
-}
-canvas{
-    border-radius:15px;
-    box-shadow:0 0 25px rgba(0,255,255,0.3);
-}
-#questionBox{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.92);
-    display:none;
-    justify-content:center;
-    align-items:center;
-    flex-direction:column;
-    gap:30px;
-    text-align:center;
-    color:white;
-    font-size:1.5em;
-    z-index:100;
-    backdrop-filter:blur(5px);
-}
-#questionText{
-    color:#00ffff;
-    text-shadow:0 0 10px cyan, 0 0 20px blue;
-    max-width:600px;
-    padding:20px;
-    background:rgba(0,0,0,0.7);
-    border-radius:15px;
-    border:2px solid cyan;
-    box-shadow:0 0 30px rgba(0,255,255,0.3);
-}
-#options{
-    display:flex;
-    gap:20px;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin:20px 0;
-}
-button.option{
-    padding:20px 35px;
-    border:none;
-    border-radius:50px;
-    cursor:pointer;
-    font-size:2em;
-    font-weight:bold;
-    background:black;
-    color:#ff00ff;
-    border:3px solid #ff00ff;
-    box-shadow:0 0 20px magenta, 0 0 40px rgba(255,0,255,0.3);
-    transition:0.3s;
-    min-width:120px;
-}
-button.option:hover{
-    transform:scale(1.1);
-    background:#ff00ff;
-    color:black;
-    box-shadow:0 0 30px magenta, 0 0 60px hotpink;
-}
-#solution{
-    color:#ffff00;
-    text-shadow:0 0 10px yellow, 0 0 20px orange;
-    font-size:1.2em;
-    background:rgba(0,0,0,0.5);
-    padding:15px 30px;
-    border-radius:10px;
-    border:1px solid yellow;
-    max-width:500px;
-}
-.soru-sayac{
-    position:fixed;
-    top:20px;
-    right:20px;
-    background:rgba(0,0,0,0.8);
-    color:#00ff00;
-    padding:10px 20px;
-    border-radius:30px;
-    border:2px solid #00ff00;
-    box-shadow:0 0 15px lime;
-    font-weight:bold;
-    z-index:101;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Knight - Orantı Savaşçısı</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="soru-sayac" id="soruSayac">Kalan Soru: 100</div>
-<canvas id="canvas" width="500" height="700"></canvas>
-<div id="questionBox">
-    <h2 id="questionText"></h2>
-    <div id="options"></div>
-    <p id="solution"></p>
-</div>
-
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-/* =============== IMAGES =============== */
-function load(name){ const img=new Image(); img.src="sprites/"+name; return img; }
-const bg = load("background-day.png");
-const baseImg = load("base.png");
-const pipeImg = load("pipe-green.png");
-const birdFrames = [load("yellowbird-upflap.png"),load("yellowbird-midflap.png"),load("yellowbird-downflap.png")];
-const messageImg = load("message.png");
-const gameoverImg = load("gameover.png");
-const scoreSprites = {"0":load("00000.png"),"1":load("111.png"),"2":load("99999.png"),"3":load("33.png"),"4":load("44.png"),"5":load("55.png"),"6":load("66.png"),"7":load("77.png"),"8":load("88.png"),"9":load("99.png")};
-
-/* =============== 7. SINIF DOĞRU-TERS ORANTI SORULARI =============== */
-const questions = [
-    {q: "3 kg elma 24 TL ise 5 kg elma kaç TL'dir?", ans: "40", sol: "Doğru orantı: 3/24 = 5/x → x = (24×5)/3 = 40 TL"},
-    {q: "Bir araç 4 saatte 320 km yol alıyorsa, 7 saatte kaç km yol alır?", ans: "560", sol: "Doğru orantı: 4/320 = 7/x → x = (320×7)/4 = 560 km"},
-    {q: "2 defter 18 TL ise 6 defter kaç TL'dir?", ans: "54", sol: "Doğru orantı: 2/18 = 6/x → x = (18×6)/2 = 54 TL"},
-    {q: "5 kalem 30 TL ise 9 kalem kaç TL'dir?", ans: "54", sol: "Doğru orantı: 5/30 = 9/x → x = (30×9)/5 = 54 TL"},
-    {q: "8 metre kumaş 120 TL ise 3 metre kumaş kaç TL'dir?", ans: "45", sol: "Doğru orantı: 8/120 = 3/x → x = (120×3)/8 = 45 TL"},
-    {q: "4 işçi bir işi 9 günde bitiriyor. Aynı işi 6 işçi kaç günde bitirir?", ans: "6", sol: "Ters orantı: 4×9 = 6×x → x = (4×9)/6 = 6 gün"},
-    {q: "Bir musluk havuzu 8 saatte dolduruyor. Aynı havuzu 2 musluk kaç saatte doldurur?", ans: "4", sol: "Ters orantı: 1×8 = 2×x → x = 8/2 = 4 saat"},
-    {q: "5 usta bir duvarı 12 günde örüyor. 3 usta aynı duvarı kaç günde örer?", ans: "20", sol: "Ters orantı: 5×12 = 3×x → x = (5×12)/3 = 20 gün"},
-    {q: "2 traktör tarlayı 15 saatte sürüyor. 5 traktör aynı tarlayı kaç saatte sürer?", ans: "6", sol: "Ters orantı: 2×15 = 5×x → x = (2×15)/5 = 6 saat"},
-    {q: "6 işçi bir işi 8 günde bitiriyor. 4 işçi aynı işi kaç günde bitirir?", ans: "12", sol: "Ters orantı: 6×8 = 4×x → x = (6×8)/4 = 12 gün"},
-    {q: "Bir otobüs 80 km/s hızla 6 saatte gittiği yolu, 120 km/s hızla kaç saatte gider?", ans: "4", sol: "Ters orantı: 80×6 = 120×x → x = (80×6)/120 = 4 saat"},
-    {q: "15 kg portakaldan 9 kg suyu çıkıyorsa, 25 kg portakaldan kaç kg su çıkar?", ans: "15", sol: "Doğru orantı: 15/9 = 25/x → x = (9×25)/15 = 15 kg"},
-    {q: "Bir fabrikada 12 makine 30 dakikada 360 ürün üretiyor. Aynı makinelerle 20 dakikada kaç ürün üretilir?", ans: "240", sol: "Doğru orantı: 30/360 = 20/x → x = (360×20)/30 = 240 ürün"},
-    {q: "3 kg fındık 150 TL ise 500 TL'ye kaç kg fındık alınır?", ans: "10", sol: "Doğru orantı: 3/150 = x/500 → x = (3×500)/150 = 10 kg"},
-    {q: "Bir havuzu 4 musluk 9 saatte dolduruyor. 6 musluk aynı havuzu kaç saatte doldurur?", ans: "6", sol: "Ters orantı: 4×9 = 6×x → x = (4×9)/6 = 6 saat"},
-    {q: "10 işçi bir işi 15 günde yapıyor. İşçi sayısı 5 artırılırsa iş kaç günde biter?", ans: "10", sol: "Ters orantı: 10×15 = 15×x → x = (10×15)/15 = 10 gün"},
-    {q: "Bir dikdörtgenin boyu 12 cm, eni 8 cm'dir. Boy 4 cm azaltılırsa alanın aynı kalması için en kaç cm artırılmalı?", ans: "4", sol: "Ters orantı: 12×8 = 8×(8+x) → x = 4 cm"},
-    {q: "240 sayfa kitabı 15 günde okuyan bir kişi, aynı hızla 400 sayfayı kaç günde okur?", ans: "25", sol: "Doğru orantı: 240/15 = 400/x → x = (15×400)/240 = 25 gün"},
-    {q: "Bir araç 90 km/s hızla 8 saatte gittiği yolu, 120 km/s hızla kaç saatte gider?", ans: "6", sol: "Ters orantı: 90×8 = 120×x → x = (90×8)/120 = 6 saat"},
-    {q: "2 kg undan 3 kg ekmek yapılıyorsa, 5 kg undan kaç kg ekmek yapılır?", ans: "7.5", sol: "Doğru orantı: 2/3 = 5/x → x = (3×5)/2 = 7.5 kg"}
-];
-
-/* =============== GAME STATE =============== */
-let gameState = "menu"; // menu, playing, gameover
-let bird = {
-    x: 100,
-    y: 300,
-    vy: 0,
-    frame: 0,
-    width: 50,
-    height: 40
-};
-let pipes = [];
-let score = 0;
-let askedQuestions = new Set();
-let currentQuestion = null;
-let awaitingQuestion = false;
-let pipeInterval = null;
-let gameLoopRunning = true;
-let animationFrame = null;
-
-const GRAVITY = 0.35;
-const JUMP_POWER = -6;
-const PIPE_GAP = 140;
-const PIPE_WIDTH = 60;
-
-/* =============== AUDIO =============== */
-const bgm = new Audio("88.m4a");
-bgm.loop = true;
-
-/* =============== SORU SAYACI =============== */
-function updateQuestionCounter() {
-    const kalan = questions.length - askedQuestions.size;
-    document.getElementById("soruSayac").innerText = `Kalan Soru: ${kalan}`;
-    document.getElementById("soruSayac").style.color = kalan < 20 ? '#ff0000' : (kalan < 50 ? '#ffff00' : '#00ff00');
-}
-
-/* =============== INPUT =============== */
-canvas.addEventListener("click", () => {
-    if(gameState === "menu") {
-        startGame();
-    } else if(gameState === "playing") {
-        bird.vy = JUMP_POWER;
-    }
-});
-
-/* =============== GAME FUNCTIONS =============== */
-function startGame() {
-    gameState = "playing";
-    bird.y = 300;
-    bird.vy = 0;
-    pipes = [];
-    score = 0;
-    bgm.play();
-    startPipeSpawning();
-}
-
-function gameOver() {
-    gameState = "gameover";
-    bgm.pause();
-    bgm.currentTime = 0;
-    stopPipeSpawning();
-    setTimeout(() => showQuestion(), 500);
-}
-
-function startPipeSpawning() {
-    if (pipeInterval) clearInterval(pipeInterval);
-    pipeInterval = setInterval(() => {
-        if (gameState === "playing") {
-            const topHeight = Math.random() * 250 + 50;
-            pipes.push({
-                x: canvas.width,
-                top: topHeight,
-                passed: false
-            });
-        }
-    }, 2000);
-}
-
-function stopPipeSpawning() {
-    if (pipeInterval) {
-        clearInterval(pipeInterval);
-        pipeInterval = null;
-    }
-}
-
-function showQuestion() {
-    if (awaitingQuestion) return;
-    
-    const available = questions.filter((q, i) => !askedQuestions.has(i));
-    if (available.length === 0) {
-        document.getElementById("questionText").innerText = "TEBRİKLER! 🎉\nTüm soruları cevapladın!";
-        document.getElementById("options").innerHTML = "";
-        document.getElementById("solution").innerHTML = "Sen gerçek bir matematik şampiyonusun! 🌟";
-        document.getElementById("questionBox").style.display = "flex";
-        gameState = "menu";
-        return;
-    }
-    
-    awaitingQuestion = true;
-    const index = Math.floor(Math.random() * available.length);
-    currentQuestion = available[index];
-    askedQuestions.add(questions.indexOf(currentQuestion));
-    updateQuestionCounter();
-    
-    document.getElementById("questionText").innerText = currentQuestion.q;
-    const optsDiv = document.getElementById("options");
-    optsDiv.innerHTML = "";
-    
-    const correct = parseFloat(currentQuestion.ans);
-    let choices = [correct];
-    while (choices.length < 4) {
-        let wrong;
-        if (Number.isInteger(correct)) {
-            wrong = correct + Math.floor(Math.random() * 7) - 3;
-            if (wrong < 1) wrong = correct + 2;
-        } else {
-            wrong = (correct + (Math.random() * 4 - 2)).toFixed(1);
-        }
-        if (!choices.includes(parseFloat(wrong))) {
-            choices.push(parseFloat(wrong));
-        }
-    }
-    
-    choices = choices.sort(() => Math.random() - 0.5);
-    
-    choices.forEach(choice => {
-        const btn = document.createElement("button");
-        btn.className = "option";
-        btn.innerText = choice;
-        btn.onclick = () => checkAnswer(choice.toString());
-        optsDiv.appendChild(btn);
-    });
-    
-    document.getElementById("solution").innerText = "";
-    document.getElementById("questionBox").style.display = "flex";
-}
-
-function checkAnswer(answer) {
-    if (answer === currentQuestion.ans) {
-        document.getElementById("questionBox").style.display = "none";
-        gameState = "menu";
-        awaitingQuestion = false;
-    } else {
-        document.getElementById("solution").innerHTML = "❌ Yanlış!<br><br>" + currentQuestion.sol;
-    }
-}
-
-/* =============== UPDATE =============== */
-function update() {
-    if (gameState !== "playing") return;
-    
-    // Bird fiziği
-    bird.vy += GRAVITY;
-    bird.y += bird.vy;
-    bird.frame += 0.2;
-    
-    // Pipe'ları güncelle (tersten döngü)
-    for (let i = pipes.length - 1; i >= 0; i--) {
-        const pipe = pipes[i];
-        pipe.x -= 4;
+    <div class="game-container">
+        <div class="game-header">
+            <h1>⚔️ MATH KNIGHT ⚔️</h1>
+            <div class="level-info">
+                Level: <span id="level-display">1</span>
+            </div>
+            <div class="music-control">
+                <button id="music-toggle">🔊 Müzik Aç</button>
+                <button id="music-volume">🔊 Ses</button>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.7">
+            </div>
+        </div>
         
-        // Çarpışma kontrolü
-        const birdRight = bird.x + bird.width;
-        const birdBottom = bird.y + bird.height;
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
         
-        // Üst boru çarpışması
-        if (birdRight > pipe.x && 
-            bird.x < pipe.x + PIPE_WIDTH && 
-            bird.y < pipe.top) {
-            gameOver();
-            return;
-        }
-        
-        // Alt boru çarpışması
-        if (birdRight > pipe.x && 
-            bird.x < pipe.x + PIPE_WIDTH && 
-            birdBottom > pipe.top + PIPE_GAP) {
-            gameOver();
-            return;
-        }
-        
-        // Skor kontrolü
-        if (!pipe.passed && pipe.x + PIPE_WIDTH < bird.x) {
-            score++;
-            pipe.passed = true;
-        }
-        
-        // Pipe'ı kaldır
-        if (pipe.x + PIPE_WIDTH < 0) {
-            pipes.splice(i, 1);
-        }
-    }
-    
-    // Yerden çıkma kontrolü
-    if (bird.y + bird.height > canvas.height - 50 || bird.y < 0) {
-        gameOver();
-    }
-}
+        <div class="game-controls">
+            <p>Kontroller: A/Saldır | Z/Zıpla | Sol/Saşrı Ok</p>
+        </div>
+    </div>
 
-/* =============== DRAW =============== */
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Arkaplan
-    ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    
-    // Pipe'lar (DÜZELTİLDİ - şimdi doğru görünecek)
-    pipes.forEach(pipe => {
-        // Üst pipe (normal)
-        ctx.save();
-        ctx.drawImage(pipeImg, pipe.x, pipe.top - 320, PIPE_WIDTH, 320);
-        ctx.restore();
-        
-        // Alt pipe (ters - şimdi doğru şekilde ters döndü)
-        ctx.save();
-        ctx.translate(pipe.x + PIPE_WIDTH/2, pipe.top + PIPE_GAP);
-        ctx.scale(1, -1);
-        ctx.drawImage(pipeImg, -PIPE_WIDTH/2, -320, PIPE_WIDTH, 320);
-        ctx.restore();
-    });
-    
-    // Kuş
-    if (gameState !== "menu") {
-        const frameIndex = Math.floor(bird.frame) % 3;
-        ctx.drawImage(birdFrames[frameIndex], bird.x, bird.y, bird.width, bird.height);
-    }
-    
-    // Zemin
-    ctx.drawImage(baseImg, 0, canvas.height - 50, canvas.width, 50);
-    
-    // Menü mesajı
-    if (gameState === "menu") {
-        ctx.drawImage(messageImg, canvas.width/2 - 110, canvas.height/2 - 60, 220, 120);
-    }
-    
-    // Gameover mesajı
-    if (gameState === "gameover") {
-        ctx.drawImage(gameoverImg, canvas.width/2 - 120, canvas.height/2 - 60, 240, 120);
-    }
-    
-    // Skor
-    const scoreStr = score.toString();
-    let offset = 0;
-    for (let i = 0; i < scoreStr.length; i++) {
-        const digit = scoreStr[i];
-        if (scoreSprites[digit]) {
-            const x = canvas.width/2 - (scoreStr.length * 30)/2 + offset;
-            ctx.drawImage(scoreSprites[digit], x, 20, 30, 50);
-        }
-        offset += 30;
-    }
-}
+    <!-- Matematik Sorusu Modalı -->
+    <div id="mathModal" class="modal">
+        <div class="modal-content">
+            <h2>📚 SORU ÇÖZ ZAMANI! 📚</h2>
+            <p class="question-counter">Soru <span id="current-question">1</span>/5</p>
+            <div id="question-box">
+                <p id="question-text"></p>
+            </div>
+            <div class="options" id="options-container"></div>
+            <div id="feedback"></div>
+        </div>
+    </div>
 
-/* =============== GAME LOOP =============== */
-function gameLoop() {
-    if (!gameLoopRunning) return;
-    update();
-    draw();
-    animationFrame = requestAnimationFrame(gameLoop);
-}
+    <!-- Oyun Bitti Modalı -->
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2>⚔️ KAHRAMAN DÜŞTÜ! ⚔️</h2>
+            <p>5 soruyu çözerek geri dön!</p>
+            <button id="startQuestions">SORULARI BAŞLAT</button>
+        </div>
+    </div>
 
-/* =============== TEMİZLİK =============== */
-window.addEventListener('beforeunload', () => {
-    if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-    }
-    stopPipeSpawning();
-    gameLoopRunning = false;
-});
+    <!-- Level Atlama Modalı -->
+    <div id="levelUpModal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 LEVEL ATLADIN! 🎉</h2>
+            <p id="level-up-text"></p>
+            <button id="continueGame">DEVAM ET</button>
+        </div>
+    </div>
 
-// Soru sayacını başlat
-updateQuestionCounter();
-
-// Oyunu başlat
-gameLoopRunning = true;
-gameLoop();
-</script>
+    <script src="music-control.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
